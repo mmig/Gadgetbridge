@@ -1,5 +1,7 @@
 
-apply plugin: 'com.android.application'
+//MODIFIED mc: for use as library -> use *.library instead of *.application
+//apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 apply plugin: 'findbugs'
 apply plugin: 'pmd'
 
@@ -21,7 +23,8 @@ android {
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "nodomain.freeyourgadget.gadgetbridge"
+        //DISABLED mc: for use as library
+        //applicationId "nodomain.freeyourgadget.gadgetbridge"
         minSdkVersion 19
         targetSdkVersion 25
 

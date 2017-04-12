@@ -268,12 +268,10 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.charts_fetch_activity_data:
-                fetchActivityData();
-                return true;
-            default:
-                break;
+        int i = item.getItemId();
+        if (i == R.id.charts_fetch_activity_data) {
+            fetchActivityData();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

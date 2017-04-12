@@ -219,26 +219,26 @@ public class ControlCenterv2 extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
 
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                Intent settingsIntent = new Intent(this, SettingsActivity.class);
-                startActivity(settingsIntent);
-                return true;
-            case R.id.action_debug:
-                Intent debugIntent = new Intent(this, DebugActivity.class);
-                startActivity(debugIntent);
-                return true;
-            case R.id.action_db_management:
-                Intent dbIntent = new Intent(this, DbManagementActivity.class);
-                startActivity(dbIntent);
-                return true;
-            case R.id.action_quit:
-                GBApplication.quit();
-                return true;
-            case R.id.external_changelog:
-                ChangeLog cl = new ChangeLog(this);
-                cl.getFullLogDialog().show();
-                return true;
+        int i = item.getItemId();
+        if (i == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        } else if (i == R.id.action_debug) {
+            Intent debugIntent = new Intent(this, DebugActivity.class);
+            startActivity(debugIntent);
+            return true;
+        } else if (i == R.id.action_db_management) {
+            Intent dbIntent = new Intent(this, DbManagementActivity.class);
+            startActivity(dbIntent);
+            return true;
+        } else if (i == R.id.action_quit) {
+            GBApplication.quit();
+            return true;
+        } else if (i == R.id.external_changelog) {
+            ChangeLog cl = new ChangeLog(this);
+            cl.getFullLogDialog().show();
+            return true;
         }
 
         return true;

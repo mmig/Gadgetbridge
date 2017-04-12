@@ -33,17 +33,16 @@
         android:name=".GBApplication"
         android:allowBackup="false"
         android:fullBackupContent="false"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
         android:theme="@style/GadgetbridgeTheme">
         <activity
             android:name=".activities.ControlCenterv2"
             android:label="@string/title_activity_controlcenter"
+            android:icon="@drawable/ic_launcher"
             android:theme="@style/GadgetbridgeTheme.NoActionBar">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.VIEW" />
+                <!--category android:name="android.intent.category.LAUNCHER" /-->
             </intent-filter>
         </activity>
         <activity
