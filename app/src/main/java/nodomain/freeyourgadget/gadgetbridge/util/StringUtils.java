@@ -93,4 +93,17 @@ public class StringUtils {
         }
         return "";
     }
+
+    public static String replaceUmlauts(String str){
+        if(str != null){
+            return str.replaceAll("\u00F6", "oe")
+                    .replaceAll("\u00E4", "ae")
+                    .replaceAll("\u00FC", "ue")
+                    .replaceAll("\u00DF", "ss")
+                    .replaceAll("\u00D6", "Oe")
+                    .replaceAll("\u00C4", "Ae")
+                    .replace("\u00DC", "Ue");
+        }
+        return "";
+    }
 }

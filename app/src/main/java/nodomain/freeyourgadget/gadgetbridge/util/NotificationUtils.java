@@ -28,12 +28,12 @@ public class NotificationUtils {
     public static String getPreferredTextFor(NotificationSpec notificationSpec, int lengthBody, int lengthSubject, Context context) {
         switch (notificationSpec.type) {
             case GENERIC_ALARM_CLOCK:
-                return StringUtils.getFirstOf(notificationSpec.title, notificationSpec.subject);
+                return StringUtils.replaceUmlauts(StringUtils.getFirstOf(notificationSpec.title, notificationSpec.subject));
             case GENERIC_SMS:
             case GENERIC_EMAIL:
-                return formatText(notificationSpec.sender, notificationSpec.subject, notificationSpec.body, lengthBody, lengthSubject, context);
+                return StringUtils.replaceUmlauts(formatText(notificationSpec.sender, notificationSpec.subject, notificationSpec.body, lengthBody, lengthSubject, context));
             case GENERIC_NAVIGATION:
-                return StringUtils.getFirstOf(notificationSpec.title, notificationSpec.body);
+                return StringUtils.replaceUmlauts(StringUtils.getFirstOf(notificationSpec.title, notificationSpec.body));
             case RIOT:
             case SIGNAL:
             case TELEGRAM:
@@ -42,7 +42,7 @@ public class NotificationUtils {
             case CONVERSATIONS:
             case FACEBOOK:
             case FACEBOOK_MESSENGER:
-                return StringUtils.ensureNotNull(notificationSpec.body);
+                return StringUtils.replaceUmlauts(StringUtils.ensureNotNull(notificationSpec.body));
         }
         return "";
     }
