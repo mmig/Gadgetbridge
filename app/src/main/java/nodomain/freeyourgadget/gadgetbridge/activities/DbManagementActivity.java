@@ -1,5 +1,5 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti
+/*  Copyright (C) 2016-2017 Alberto, Andreas Shimokawa, Carsten Pfeiffer,
+    Daniele Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -19,7 +19,6 @@ package nodomain.freeyourgadget.gadgetbridge.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
@@ -46,7 +45,7 @@ import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import nodomain.freeyourgadget.gadgetbridge.util.ImportExportSharedPreferences;
 
 
-public class DbManagementActivity extends GBActivity {
+public class DbManagementActivity extends AbstractGBActivity {
     private static final Logger LOG = LoggerFactory.getLogger(DbManagementActivity.class);
     private static SharedPreferences sharedPrefs;
     private ImportExportSharedPreferences shared_file = new ImportExportSharedPreferences();
@@ -61,9 +60,6 @@ public class DbManagementActivity extends GBActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_db_management);
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(GBApplication.ACTION_QUIT);
 
         dbPath = (TextView) findViewById(R.id.activity_db_management_path);
         dbPath.setText(getExternalPath());

@@ -69,7 +69,7 @@ import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import static android.bluetooth.le.ScanSettings.MATCH_MODE_STICKY;
 import static android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY;
 
-public class DiscoveryActivity extends GBActivity implements AdapterView.OnItemClickListener {
+public class DiscoveryActivity extends AbstractGBActivity implements AdapterView.OnItemClickListener {
     private static final Logger LOG = LoggerFactory.getLogger(DiscoveryActivity.class);
     private static final long SCAN_DURATION = 60000; // 60s
 
@@ -584,7 +584,7 @@ public class DiscoveryActivity extends GBActivity implements AdapterView.OnItemC
             startActivity(intent);
         } else {
             GBDevice device = DeviceHelper.getInstance().toSupportedDevice(deviceCandidate);
-            int bondingStyle = coordinator.getBondingStyle(deviceCandidate);
+            int bondingStyle = coordinator.getBondingStyle(device);
             if (bondingStyle == DeviceCoordinator.BONDING_STYLE_NONE) {
                 LOG.info("No bonding needed, according to coordinator, so connecting right away");
                 connectAndFinish(device);

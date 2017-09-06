@@ -63,6 +63,10 @@
             android:label="@string/title_activity_appblacklist"
             android:parentActivityName=".activities.SettingsActivity" />
         <activity
+            android:name=".activities.CalBlacklistActivity"
+            android:label="@string/title_activity_calblacklist"
+            android:parentActivityName=".activities.SettingsActivity" />
+        <activity
             android:name=".activities.FwAppInstallerActivity"
             android:label="@string/title_activity_fw_app_insaller"
             android:parentActivityName=".activities.ControlCenterv2">
@@ -109,6 +113,26 @@
                 <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.ft" />
                 <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.ft" />
                 <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.ft" />
+                <data android:pathPattern="/.*\\.res" />
+                <data android:pathPattern="/.*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
                 <data android:pathPattern="/.*\\.pbw" />
                 <data android:pathPattern="/.*\\..*\\.pbw" />
                 <data android:pathPattern="/.*\\..*\\..*\\.pbw" />
@@ -182,6 +206,26 @@
                 <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.ft" />
                 <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.ft" />
                 <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.ft" />
+                <data android:pathPattern="/.*\\.res" />
+                <data android:pathPattern="/.*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.res" />
+                <data android:pathPattern="/.*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
+                <data android:pathPattern="/.*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.gps" />
                 <data android:pathPattern="/.*\\.pbw" />
                 <data android:pathPattern="/.*\\..*\\.pbw" />
                 <data android:pathPattern="/.*\\..*\\..*\\.pbw" />
@@ -250,6 +294,7 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <service android:name=".service.NotificationCollectorMonitorService" />
         <service android:name=".service.DeviceCommunicationService" />
 
         <receiver

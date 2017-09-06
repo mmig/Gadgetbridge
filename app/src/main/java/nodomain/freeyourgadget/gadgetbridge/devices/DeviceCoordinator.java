@@ -23,7 +23,6 @@ import android.bluetooth.le.ScanFilter;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -202,8 +201,6 @@ public interface DeviceCoordinator {
      */
     boolean supportsHeartRateMeasurement(GBDevice device);
 
-    int getTapString();
-
     /**
      * Returns the readable name of the manufacturer.
      */
@@ -225,7 +222,20 @@ public interface DeviceCoordinator {
 
     /**
      * Returns how/if the given device should be bonded before connecting to it.
-     * @param deviceCandidate
+     * @param device
      */
-    int getBondingStyle(GBDeviceCandidate deviceCandidate);
+    int getBondingStyle(GBDevice device);
+
+    /**
+     * Indicates whether the device has some kind of calender we can sync to.
+     * Also used for generated sunrise/sunset events
+     */
+    boolean supportsCalendarEvents();
+
+    /**
+     * Indicates whether the device supports getting a stream of live data.
+     * This can be live HR, steps etc.
+     */
+    boolean supportsRealtimeData();
+    
 }

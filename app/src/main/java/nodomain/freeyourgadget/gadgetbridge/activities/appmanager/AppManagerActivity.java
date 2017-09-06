@@ -1,4 +1,5 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Daniele Gobbetti
+/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+    Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -17,16 +18,12 @@
 package nodomain.freeyourgadget.gadgetbridge.activities.appmanager;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.view.MenuItem;
 import android.view.View;
@@ -43,7 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.AbstractFragmentPagerAdapter;
 import nodomain.freeyourgadget.gadgetbridge.activities.AbstractGBFragmentActivity;
@@ -58,18 +54,6 @@ public class AppManagerActivity extends AbstractGBFragmentActivity {
     private int READ_REQUEST_CODE = 42;
 
     private GBDevice mGBDevice = null;
-
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            switch (action) {
-                case GBApplication.ACTION_QUIT:
-                    finish();
-                    break;
-            }
-        }
-    };
 
     public GBDevice getGBDevice() {
         return mGBDevice;
@@ -100,11 +84,6 @@ public class AppManagerActivity extends AbstractGBFragmentActivity {
                 startActivityForResult(intent, READ_REQUEST_CODE);
             }
         });
-
-        IntentFilter filterLocal = new IntentFilter();
-        filterLocal.addAction(GBApplication.ACTION_QUIT);
-        filterLocal.addAction(GBDevice.ACTION_DEVICE_CHANGED);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filterLocal);
 
         // Set up the ViewPager with the sections adapter.
         ViewPager viewPager = (ViewPager) findViewById(R.id.appmanager_pager);
@@ -176,14 +155,11 @@ public class AppManagerActivity extends AbstractGBFragmentActivity {
 
 
     static synchronized void rewriteAppOrderFile(String filename, List<UUID> uuids) {
-        try {
-            FileWriter fileWriter = new FileWriter(FileUtils.getExternalFilesDir() + "/" + filename);
-            BufferedWriter out = new BufferedWriter(fileWriter);
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(FileUtils.getExternalFilesDir() + "/" + filename))) {
             for (UUID uuid : uuids) {
                 out.write(uuid.toString());
                 out.newLine();
             }
-            out.close();
         } catch (IOException e) {
             LOG.warn("can't write app order to file!");
         }
@@ -199,8 +175,7 @@ public class AppManagerActivity extends AbstractGBFragmentActivity {
 
     static synchronized ArrayList<UUID> getUuidsFromFile(String filename) {
         ArrayList<UUID> uuids = new ArrayList<>();
-        try (FileReader fileReader = new FileReader(FileUtils.getExternalFilesDir() + "/" + filename)) {
-            BufferedReader in = new BufferedReader(fileReader);
+        try (BufferedReader in = new BufferedReader(new FileReader(FileUtils.getExternalFilesDir() + "/" + filename))) {
             String line;
             while ((line = in.readLine()) != null) {
                 uuids.add(UUID.fromString(line));
@@ -219,11 +194,5 @@ public class AppManagerActivity extends AbstractGBFragmentActivity {
             startIntent.setDataAndType(resultData.getData(), null);
             startActivity(startIntent);
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
-        super.onDestroy();
     }
 }

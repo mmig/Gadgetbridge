@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Carsten Pfeiffer
+/*  Copyright (C) 2016-2017 Carsten Pfeiffer, Daniele Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -20,7 +20,8 @@ import java.text.ParseException;
 import java.util.Date;
 
 public class GBPrefs {
-
+    public static final String PACKAGE_BLACKLIST = "package_blacklist";
+    public static final String CALENDAR_BLACKLIST = "calendar_blacklist";
     public static final String AUTO_RECONNECT = "general_autocreconnect";
     private static final String AUTO_START = "general_autostartonboot";
     private static final boolean AUTO_START_DEFAULT = true;
@@ -61,7 +62,7 @@ public class GBPrefs {
         }
     }
 
-    public int getUserSex() {
+    public int getUserGender() {
         return 0;
     }
 }

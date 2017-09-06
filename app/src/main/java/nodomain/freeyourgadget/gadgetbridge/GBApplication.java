@@ -24,6 +24,7 @@ import android.app.NotificationManager.Policy;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -40,6 +41,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -53,6 +56,8 @@ import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceService;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityUser;
 import nodomain.freeyourgadget.gadgetbridge.model.DeviceService;
+import nodomain.freeyourgadget.gadgetbridge.service.NotificationCollectorMonitorService;
+import nodomain.freeyourgadget.gadgetbridge.util.AndroidUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.FileUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import nodomain.freeyourgadget.gadgetbridge.util.GBPrefs;
@@ -86,13 +91,22 @@ public class GBApplication extends Application {
 
     public static final String ACTION_QUIT
             = "nodomain.freeyourgadget.gadgetbridge.gbapplication.action.quit";
+    public static final String ACTION_LANGUAGE_CHANGE = "nodomain.freeyourgadget.gadgetbridge.gbapplication.action.language_change";
+
+    private static GBApplication app;
+
     private static Logging logging = new Logging() {
         @Override
         protected String createLogDirectory() throws IOException {
-            File dir = FileUtils.getExternalFilesDir();
-            return dir.getAbsolutePath();
+            if (GBEnvironment.env().isLocalTest()) {
+                return System.getProperty(Logging.PROP_LOGFILES_DIR);
+            } else {
+                File dir = FileUtils.getExternalFilesDir();
+                return dir.getAbsolutePath();
+            }
         }
     };
+    private static Locale language;
 
     private DeviceManager deviceManager;
 
@@ -108,12 +122,17 @@ public class GBApplication extends Application {
         // don't do anything here, add it to onCreate instead
     }
 
+    public static Logging getLogging() {
+        return logging;
+    }
+
     protected DeviceService createDeviceService() {
         return new GBDeviceService(this);
     }
 
     @Override
     public void onCreate() {
+        app = this;
         super.onCreate();
 
         if (lockHandler != null) {
@@ -125,6 +144,13 @@ public class GBApplication extends Application {
         prefs = new Prefs(sharedPrefs);
         gbPrefs = new GBPrefs(prefs);
 
+        if (!GBEnvironment.isEnvironmentSetup()) {
+            GBEnvironment.setupEnvironment(GBEnvironment.createDeviceEnvironment());
+            // setup db after the environment is set up, but don't do it in test mode
+            // in test mode, it's done individually, see TestBase
+            setupDatabase();
+        }
+
         // don't do anything here before we set up logging, otherwise
         // slf4j may be implicitly initialized before we properly configured it.
         setupLogging(isFileLoggingEnabled());
@@ -135,17 +161,18 @@ public class GBApplication extends Application {
 
         setupExceptionHandler();
 
-        GB.environment = GBEnvironment.createDeviceEnvironment();
-
-        setupDatabase(this);
-
         deviceManager = new DeviceManager(this);
+        String language = prefs.getString("language", "default");
+        setLanguage(language);
 
         deviceService = createDeviceService();
-        loadBlackList();
+        loadAppsBlackList();
+        loadCalendarsBlackList();
 
         if (isRunningMarshmallowOrLater()) {
             notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            //the following will ensure the notification manager is kept alive
+            startService(new Intent(this, NotificationCollectorMonitorService.class));
         }
     }
 
@@ -191,8 +218,14 @@ public class GBApplication extends Application {
         return prefs.getBoolean("minimize_priority", false);
     }
 
-    static void setupDatabase(Context context) {
-        DBOpenHelper helper = new DBOpenHelper(context, DATABASE_NAME, null);
+    public void setupDatabase() {
+        DaoMaster.OpenHelper helper;
+        GBEnvironment env = GBEnvironment.env();
+        if (env.isTest()) {
+            helper = new DaoMaster.DevOpenHelper(this, null, null);
+        } else {
+            helper = new DBOpenHelper(this, DATABASE_NAME, null);
+        }
         SQLiteDatabase db = helper.getWritableDatabase();
         DaoMaster daoMaster = new DaoMaster(db);
         if (lockHandler == null) {
@@ -310,35 +343,107 @@ public class GBApplication extends Application {
         return NotificationManager.INTERRUPTION_FILTER_ALL;
     }
 
-    public static HashSet<String> blacklist = null;
+    private static HashSet<String> apps_blacklist = null;
 
-    private static void loadBlackList() {
-        blacklist = (HashSet<String>) sharedPrefs.getStringSet("package_blacklist", null);
-        if (blacklist == null) {
-            blacklist = new HashSet<>();
+    public static boolean appIsBlacklisted(String packageName) {
+        if (apps_blacklist == null) {
+            GB.log("appIsBlacklisted: apps_blacklist is null!", GB.INFO, null);
         }
+        return apps_blacklist != null && apps_blacklist.contains(packageName);
     }
 
-    private static void saveBlackList() {
-        SharedPreferences.Editor editor = sharedPrefs.edit();
-        if (blacklist.isEmpty()) {
-            editor.putStringSet("package_blacklist", null);
+    public static void setAppsBlackList(Set<String> packageNames) {
+        if (packageNames == null) {
+            GB.log("Set null apps_blacklist", GB.INFO, null);
+            apps_blacklist = new HashSet<>();
         } else {
-            editor.putStringSet("package_blacklist", blacklist);
+            apps_blacklist = new HashSet<>(packageNames);
+        }
+        GB.log("New apps_blacklist has " + apps_blacklist.size() + " entries", GB.INFO, null);
+        saveAppsBlackList();
+    }
+
+    private static void loadAppsBlackList() {
+        GB.log("Loading apps_blacklist", GB.INFO, null);
+        apps_blacklist = (HashSet<String>) sharedPrefs.getStringSet(GBPrefs.PACKAGE_BLACKLIST, null);
+        if (apps_blacklist == null) {
+            apps_blacklist = new HashSet<>();
+        }
+        GB.log("Loaded apps_blacklist has " + apps_blacklist.size() + " entries", GB.INFO, null);
+    }
+
+    private static void saveAppsBlackList() {
+        GB.log("Saving apps_blacklist with " + apps_blacklist.size() + " entries", GB.INFO, null);
+        SharedPreferences.Editor editor = sharedPrefs.edit();
+        if (apps_blacklist.isEmpty()) {
+            editor.putStringSet(GBPrefs.PACKAGE_BLACKLIST, null);
+        } else {
+            Prefs.putStringSet(editor, GBPrefs.PACKAGE_BLACKLIST, apps_blacklist);
         }
         editor.apply();
     }
 
-    public static void addToBlacklist(String packageName) {
-        if (!blacklist.contains(packageName)) {
-            blacklist.add(packageName);
-            saveBlackList();
+    public static void addAppToBlacklist(String packageName) {
+        if (apps_blacklist.add(packageName)) {
+            saveAppsBlackList();
         }
     }
 
-    public static synchronized void removeFromBlacklist(String packageName) {
-        blacklist.remove(packageName);
-        saveBlackList();
+    public static synchronized void removeFromAppsBlacklist(String packageName) {
+        GB.log("Removing from apps_blacklist: " + packageName, GB.INFO, null);
+        apps_blacklist.remove(packageName);
+        saveAppsBlackList();
+    }
+
+    private static HashSet<String> calendars_blacklist = null;
+
+    public static boolean calendarIsBlacklisted(String calendarDisplayName) {
+        if (calendars_blacklist == null) {
+            GB.log("calendarIsBlacklisted: calendars_blacklist is null!", GB.INFO, null);
+        }
+        return calendars_blacklist != null && calendars_blacklist.contains(calendarDisplayName);
+    }
+
+    public static void setCalendarsBlackList(Set<String> calendarNames) {
+        if (calendarNames == null) {
+            GB.log("Set null apps_blacklist", GB.INFO, null);
+            calendars_blacklist = new HashSet<>();
+        } else {
+            calendars_blacklist = new HashSet<>(calendarNames);
+        }
+        GB.log("New calendars_blacklist has " + calendars_blacklist.size() + " entries", GB.INFO, null);
+        saveCalendarsBlackList();
+    }
+
+    public static void addCalendarToBlacklist(String calendarDisplayName) {
+        if (calendars_blacklist.add(calendarDisplayName)) {
+            saveCalendarsBlackList();
+        }
+    }
+
+    public static void removeFromCalendarBlacklist(String calendarDisplayName) {
+        calendars_blacklist.remove(calendarDisplayName);
+        saveCalendarsBlackList();
+    }
+
+    private static void loadCalendarsBlackList() {
+        GB.log("Loading calendars_blacklist", GB.INFO, null);
+        calendars_blacklist = (HashSet<String>) sharedPrefs.getStringSet(GBPrefs.CALENDAR_BLACKLIST, null);
+        if (calendars_blacklist == null) {
+            calendars_blacklist = new HashSet<>();
+        }
+        GB.log("Loaded calendars_blacklist has " + calendars_blacklist.size() + " entries", GB.INFO, null);
+    }
+
+    private static void saveCalendarsBlackList() {
+        GB.log("Saving calendars_blacklist with " + calendars_blacklist.size() + " entries", GB.INFO, null);
+        SharedPreferences.Editor editor = sharedPrefs.edit();
+        if (calendars_blacklist.isEmpty()) {
+            editor.putStringSet(GBPrefs.CALENDAR_BLACKLIST, null);
+        } else {
+            Prefs.putStringSet(editor, GBPrefs.CALENDAR_BLACKLIST, calendars_blacklist);
+        }
+        editor.apply();
     }
 
     /**
@@ -422,6 +527,23 @@ public class GBApplication extends Application {
         editor.apply();
     }
 
+    public static void setLanguage(String lang) {
+        if (lang.equals("default")) {
+            language = Resources.getSystem().getConfiguration().locale;
+        } else {
+            language = new Locale(lang);
+        }
+        updateLanguage(language);
+    }
+
+    public static void updateLanguage(Locale locale) {
+        AndroidUtils.setLanguage(context, locale);
+
+        Intent intent = new Intent();
+        intent.setAction(ACTION_LANGUAGE_CHANGE);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
     public static LimitedQueue getIDSenderLookup() {
         return mIDSenderLookup;
     }
@@ -435,6 +557,12 @@ public class GBApplication extends Application {
         Resources.Theme theme = context.getTheme();
         theme.resolveAttribute(R.attr.textColorPrimary, typedValue, true);
         return typedValue.data;
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        updateLanguage(getLanguage());
     }
 
     public static int getBackgroundColor(Context context) {
@@ -454,5 +582,13 @@ public class GBApplication extends Application {
 
     public DeviceManager getDeviceManager() {
         return deviceManager;
+    }
+
+    public static GBApplication app() {
+        return app;
+    }
+
+    public static Locale getLanguage() {
+        return language;
     }
 }

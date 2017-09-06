@@ -2,8 +2,16 @@ Gadgetbridge
 ============
 
 Gadgetbridge is an Android (4.4+) application which will allow you to use your
-Pebble or Mi Band without the vendor's closed source application and without the
-need to create an account and transmit any of your data to the vendor's servers.
+Pebble, Mi Band, Amazfit Bit and HPlus device (and more) without the vendor's closed source application
+and without the need to create an account and transmit any of your data to the
+vendor's servers.
+
+
+[Homepage](https://gadgetbridge.org)
+
+[Blog](https://blog.gadgetbridge.org)
+
+[![Donate](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gadgetbridge/donate)
 
 [![Build](https://travis-ci.org/Freeyourgadget/Gadgetbridge.svg?branch=master)](https://travis-ci.org/Freeyourgadget/Gadgetbridge)
 
@@ -11,28 +19,30 @@ need to create an account and transmit any of your data to the vendor's servers.
 
 [![Gadgetbridge on F-Droid](/Get_it_on_F-Droid.svg.png?raw=true "Download from F-Droid")](https://f-droid.org/repository/browse/?fdid=nodomain.freeyourgadget.gadgetbridge)
 
-[List of changes](CHANGELOG.md)
+[List of changes](https://github.com/Freeyourgadget/Gadgetbridge/blob/master/CHANGELOG.md)
 
 ## Supported Devices
 * Pebble, Pebble Steel, Pebble Time, Pebble Time Steel, Pebble Time Round [Wiki section about this device](https://github.com/Freeyourgadget/Gadgetbridge/wiki/Pebble)
-* Pebble 2, Pebble Time 2 (experimental, PAIR WITHIN GADGETBRIDGE) [Wiki section about pebble](https://github.com/Freeyourgadget/Gadgetbridge/wiki/Pebble), most parts apply to Pebble 2 as well
+* Pebble 2 (add the device from within Gadgetbridge!) [Wiki section about pebble](https://github.com/Freeyourgadget/Gadgetbridge/wiki/Pebble), most parts apply to Pebble 2 as well
 * Mi Band, Mi Band 1A, Mi Band 1S [Wiki section about this device](https://github.com/Freeyourgadget/Gadgetbridge/wiki/Mi-Band)
 * Mi Band 2 [Wiki section about mi band](https://github.com/Freeyourgadget/Gadgetbridge/wiki/Mi-Band), some parts apply to mi band 2 as well
-* Vibratissimo (experimental)
-* Liveview
+* Amazfit Bip (WIP) [Wiki section about the Amazfit Bip](https://github.com/Freeyourgadget/Gadgetbridge/wiki/Amazfit-Bip)
 * HPlus Devices (e.g. ZeBand) [Wiki section about this device](https://github.com/Freeyourgadget/Gadgetbridge/wiki/HPlus)
+* Teclast H30 (WIP)
+* NO.1 F1 (WIP)
+* Liveview
+* Vibratissimo (experimental)
 
 ## Features (Pebble)
 
 * Incoming calls notification and display
 * Outgoing call display
-* Reject/hangup calls
+* Reject calls (optionally with predefined texts) / hangup calls
 * SMS notification
-* K-9 Mail notification support
-* Support for generic notifications (above filtered out)
-* Support for up to 16 predefined replies for SMS and Android Wear compatible notifications (experimental, tested with Signal)
+* Support for generic notifications
+* Support for up to 16 predefined replies for SMS and Android Wear compatible notifications (experimental, tested with Signal and Conversations)
 * Dismiss individual notifications, mute or open corresponding app on phone from the action menu (generic notifications)
-* Dismiss all notifications from the action menu (non-generic notifications) 
+* Dismiss all notifications from the action menu (SMS and PebbleKit notifications)
 * Music playback info (artist, album, track)
 * Music control: play/pause, next track, previous track, volume up, volume down
 * List and remove installed apps/watchfaces
@@ -41,7 +51,8 @@ need to create an account and transmit any of your data to the vendor's servers.
 * Install language files (.pbl)
 * Take and share screenshots from the Pebble's screen
 * PebbleKit support for 3rd Party Android Apps (experimental)
-* Fetch activity data from Pebble Health, Misfit and Morpheuz (experimental)
+* Fetch activity data from Pebble Health
+* Build-in support for Misfit and Morpheuz (experimental)
 * Configure watchfaces / apps (limited compatibility, experimental)
 
 ## Notes about Firmware >=3.0 (Pebble Time, updated OG)
@@ -134,6 +145,8 @@ For more information read [this wiki article](https://github.com/Freeyourgadget/
 ### Additional device support
 
 * João Paulo Barraca (HPlus)
+* Vitaly Svyastyn (NO.1 F1)
+* Sami Alaoui (Teclast H30)
 
 ## Contribute
 
@@ -141,7 +154,7 @@ Contributions are welcome, be it feedback, bugreports, documentation, translatio
 on any of the open [issues](https://github.com/Freeyourgadget/Gadgetbridge/issues?q=is%3Aopen+is%3Aissue);
 just leave a comment that you're working on one to avoid duplicated work.
 
-Translations can be contributed via https://www.transifex.com/projects/p/gadgetbridge/resource/strings/ or manually.
+Translations can be contributed via https://hosted.weblate.org/projects/freeyourgadget/gadgetbridge/
 
 ## Do you have further questions or feedback?
 

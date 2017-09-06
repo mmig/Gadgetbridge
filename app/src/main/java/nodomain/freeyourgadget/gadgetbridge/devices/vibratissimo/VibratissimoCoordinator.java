@@ -101,11 +101,6 @@ public class VibratissimoCoordinator extends AbstractDeviceCoordinator {
     }
 
     @Override
-    public int getTapString() {
-        return R.string.tap_connected_device_for_vibration;
-    }
-
-    @Override
     public String getManufacturer() {
         return "Amor AG";
     }
@@ -118,6 +113,16 @@ public class VibratissimoCoordinator extends AbstractDeviceCoordinator {
     @Override
     public Class<? extends Activity> getAppsManagementActivity() {
         return null;
+    }
+
+    @Override
+    public boolean supportsCalendarEvents() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsRealtimeData() {
+        return false; // hmmm well, it has a temperature sensor :D
     }
 
     @Override
