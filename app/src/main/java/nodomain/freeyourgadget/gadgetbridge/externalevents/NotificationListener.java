@@ -242,8 +242,21 @@ public class NotificationListener extends NotificationListenerService {
             }
         }
 
-        if (GBApplication.blacklist != null && GBApplication.blacklist.contains(source)) {
-            LOG.info("Not forwarding notification, application is blacklisted");
+//        if (GBApplication.blacklist != null && GBApplication.blacklist.contains(source)) {
+//            LOG.info("Not forwarding notification, application is blacklisted");
+//            return;
+//        }
+
+        //MOD russa: use blacklist as whitelist
+        if (GBApplication.blacklist != null && GBApplication.blacklist.size() > 0 && !GBApplication.blacklist.contains(source)) {
+            LOG.info("Not forwarding notification, application is not whitelisted");
+            return;
+        }
+
+        //MOD russa: allow disabling via notification's extra-property "disableGadgetNotification" (boolean)
+        boolean disabled = notification.extras.getBoolean("disableGadgetNotification", false);
+        if(disabled){
+            LOG.info("Not forwarding notification, notification had extra 'disableGadgetNotification' = true");
             return;
         }
 
