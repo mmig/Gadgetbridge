@@ -818,6 +818,7 @@ public class MiBand2Support extends AbstractBTLEDeviceSupport {
     }
 
     public void handleButtonPressed(byte[] value) {
+
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this.getContext());
 
         LOG.info("Button pressed");
@@ -830,24 +831,31 @@ public class MiBand2Support extends AbstractBTLEDeviceSupport {
             return;
         }
 
-        int buttonPressMaxDelay = prefs.getInt(MiBandConst.PREF_MIBAND_BUTTON_PRESS_MAX_DELAY, 2000);
         int requiredButtonPressCount = prefs.getInt(MiBandConst.PREF_MIBAND_BUTTON_PRESS_COUNT, 0);
 
-        String requiredButtonPressMessage = prefs.getString(MiBandConst.PREF_MIBAND_BUTTON_PRESS_BROADCAST,
-                this.getContext().getString(R.string.mi2_prefs_button_press_broadcast_default_value));
-
         if (requiredButtonPressCount > 0) {
-            long timeSinceLastPress = System.currentTimeMillis() - currentButtonPressTime;
 
-            if ((currentButtonPressTime == 0) || (timeSinceLastPress < buttonPressMaxDelay)) {
-                currentButtonPressCount++;
-            }
-            else {
-                currentButtonPressCount = 0;
+            if(currentButtonPressCount == 0){
+                //MOD russa: need special handling for currentButtonPressCount == 0: cannot compare time to previous press!
+                currentButtonPressCount = 1;
+            } else {
+
+                int buttonPressMaxDelay = prefs.getInt(MiBandConst.PREF_MIBAND_BUTTON_PRESS_MAX_DELAY, 2000);
+                long timeSinceLastPress = System.currentTimeMillis() - currentButtonPressTime;
+                if ((currentButtonPressTime == 0) || (timeSinceLastPress < buttonPressMaxDelay)) {
+                    currentButtonPressCount++;
+                }
+                else {
+                    currentButtonPressCount = 0;
+                }
             }
 
             currentButtonPressTime = System.currentTimeMillis();
             if (currentButtonPressCount >= requiredButtonPressCount) {
+
+                String requiredButtonPressMessage = prefs.getString(MiBandConst.PREF_MIBAND_BUTTON_PRESS_BROADCAST,
+                        this.getContext().getString(R.string.mi2_prefs_button_press_broadcast_default_value));
+
                 Intent in = new Intent();
                 in.setAction(requiredButtonPressMessage);
                 this.getContext().getApplicationContext().sendBroadcast(in);
