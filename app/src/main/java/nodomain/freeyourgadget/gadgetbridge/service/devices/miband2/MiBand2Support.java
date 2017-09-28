@@ -316,7 +316,10 @@ public class MiBand2Support extends AbstractBTLEDeviceSupport {
             }
         }
         if (GBApplication.getPrefs().getBoolean(MiBandConst.PREF_MI2_ENABLE_TEXT_NOTIFICATIONS, true)) {
-            return new Mi2TextNotificationStrategy(this);
+
+            //russa: support text-only messages:
+//            return new Mi2TextNotificationStrategy(this);
+            return new Mi2TextOnlyNotificationStrategy(this);
         }
         return new Mi2NotificationStrategy(this);
     }
