@@ -28,6 +28,7 @@ public class NotificationUtils {
     public static String getPreferredTextFor(NotificationSpec notificationSpec, int lengthBody, int lengthSubject, Context context) {
         switch (notificationSpec.type) {
             case GENERIC_ALARM_CLOCK:
+            case GENERIC_TEXT_ONLY_MESSAGE://<- russa: support text-only messages
                 return StringUtils.replaceUmlauts(StringUtils.getFirstOf(notificationSpec.title, notificationSpec.subject));
             case GENERIC_SMS:
             case GENERIC_EMAIL:

@@ -40,7 +40,11 @@ public enum NotificationType {
     TWITTER(PebbleIconID.NOTIFICATION_TWITTER, PebbleColor.BlueMoon),
     TELEGRAM(PebbleIconID.NOTIFICATION_TELEGRAM, PebbleColor.PictonBlue),
     WHATSAPP(PebbleIconID.NOTIFICATION_WHATSAPP, PebbleColor.MayGreen),
-    GENERIC_ALARM_CLOCK(PebbleIconID.ALARM_CLOCK, PebbleColor.Red);
+    GENERIC_ALARM_CLOCK(PebbleIconID.ALARM_CLOCK, PebbleColor.Red),
+
+    //MOD russa: add notification-type for showing text-messages on Mi-Band 2
+    GENERIC_TEXT_ONLY_MESSAGE(PebbleIconID.LOCATION, PebbleColor.Blue);
+
     // Note: if you add any more constants, update all clients as well
 
     public final int icon;
@@ -82,6 +86,7 @@ public enum NotificationType {
             case GOOGLE_INBOX:
                 return "generic_email";
             case UNKNOWN:
+            case GENERIC_TEXT_ONLY_MESSAGE://russa: text-only message type
             default:
                 return "generic";
         }

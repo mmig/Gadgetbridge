@@ -278,6 +278,9 @@ public class BLETypeConversions {
                 return AlertCategory.InstantMessage;
             case UNKNOWN:
                 return AlertCategory.Simple;
+            //russa: support text-only messages:
+            case GENERIC_TEXT_ONLY_MESSAGE:
+                return AlertCategory.CustomTextOnly;
         }
         return AlertCategory.Simple;
     }

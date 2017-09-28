@@ -38,7 +38,10 @@ public enum AlertCategory {
     // 251-255 defined by service specification
     Any(255),
     Custom(-1),
-    CustomMiBand2(-6);
+    CustomMiBand2(-6),
+
+    //russa: support text-only messages
+    CustomTextOnly(-18);
 
     private final int id;
 
