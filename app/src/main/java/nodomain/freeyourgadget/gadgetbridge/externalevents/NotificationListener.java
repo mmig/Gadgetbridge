@@ -414,14 +414,8 @@ public class NotificationListener extends NotificationListenerService {
             }
         }
 
-//        if (GBApplication.appIsBlacklisted(source)) {
-//            LOG.info("Ignoring notification, application is blacklisted");
-//            return true;
-//        }
-
-        //MOD russa: use blacklist as whitelist
-        if (!GBApplication.appIsBlacklisted(source)) {
-            LOG.info("Not forwarding notification, application is not whitelisted");
+        if (GBApplication.appIsBlacklisted(source)) {
+            LOG.info("Ignoring notification, application is blacklisted");
             return true;
         }
 
