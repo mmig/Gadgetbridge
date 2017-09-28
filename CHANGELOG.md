@@ -1,5 +1,25 @@
 ### Changelog
 
+#### Version 0.21.3
+* Amazfit Bip: Auto-switch language on connect (English, Simplified Chinese, Traditional Chinese), requires FW 0.0.9.14+
+
+#### Version 0.21.2
+* Amazfit Bip: Support flashing CEP and ALM files for AGPS
+* Amazfit Bip: Initial experimental support for fetching logs from the watch
+* Mi2/Bip: Send user info to the device (fixes calories and distance display)
+* Mi2/Bip: Fix firmware update progressbar being stuck at the end
+* Pebble/Bip: Support more notification icons
+* Pebble: Automatically determine color for unknown notifications on Pebble Time
+
+#### Version 0.21.1
+* Initial support for EXRIZU K8 (HPLus variant)
+* Amazfit Bip: fix long messages not being displayed at all
+* Mi Band 2: Support multiple button actions
+* NO.1 F1: Fetch sleep data
+* NO.1 F1: Heart rate support
+* Pebble: Support controlling the current active media playback application
+* Fix suspended activities coming to front when rotating the screen
+
 #### Version 0.21.0
 * Initial NO.1 F1 support
 * Initial Teclast H30 support
