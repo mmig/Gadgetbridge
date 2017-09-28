@@ -72,15 +72,16 @@ public class AlertNotificationProfile<T extends AbstractBTLEDeviceSupport> exten
 
             try {
                 boolean hasAlerted = false;
+                String text;//russa BUGFIX: cannot reuse message-variable for extracted chunk, i.e. need to use separate variable (or would need ot change chunk extraction)
                 for (int i = 0; i < numChunks; i++) {
                     int offset = i * maxLength;
                     int restLength = message.length() - offset;
-                    message = message.substring(offset, offset + Math.min(maxLength, restLength));
-                    if (hasAlerted && message.length() == 0) {
+                    text = message.substring(offset, offset + Math.min(maxLength, restLength));
+                    if (hasAlerted && text.length() == 0) {
                         // no need to do it again when there is no text content
                         break;
                     }
-                    builder.write(characteristic, getAlertMessage(alert, message, 1));
+                    builder.write(characteristic, getAlertMessage(alert, text, 1));
                     hasAlerted = true;
                 }
                 if (!hasAlerted) {
