@@ -83,9 +83,6 @@ public class AppNotificationType extends HashMap<String, NotificationType> {
 
         // WhatsApp
         put("com.whatsapp", NotificationType.WHATSAPP);
-
-        //MOD russa: add morecare notifications as type "generic navigation" (will show notification's title on mi-band)
-        put("de.dfki.iui.mmig.morecare.hueflictest", NotificationType.GENERIC_NAVIGATION);
     }
 
 }
