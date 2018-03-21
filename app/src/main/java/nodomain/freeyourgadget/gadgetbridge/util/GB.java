@@ -62,9 +62,18 @@ public class GB {
     public static final String DISPLAY_MESSAGE_SEVERITY = "severity";
 
     public static Notification createNotification(String text, boolean connected, Context context) {
-        Intent notificationIntent = new Intent(context, ControlCenterv2.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        //MOD russa: open/show main activity when notification is pressed
+        context = context.getApplicationContext();
+        String pkgName  = context.getPackageName();
+        Intent notificationIntent   = context.getPackageManager()
+                .getLaunchIntentForPackage(pkgName);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //MOD russa: TODO make behavior configurable via settings?
+//        Intent notificationIntent = new Intent(context, ControlCenterv2.class);
+//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
                 notificationIntent, 0);
 
