@@ -62,7 +62,7 @@ public enum NotificationType {
     VIBER(PebbleIconID.NOTIFICATION_VIBER, PebbleColor.VividViolet),
     WECHAT(PebbleIconID.NOTIFICATION_WECHAT, PebbleColor.KellyGreen),
     WHATSAPP(PebbleIconID.NOTIFICATION_WHATSAPP, PebbleColor.IslamicGreen),
-    YAHOO_MAIL(PebbleIconID.NOTIFICATION_YAHOO_MAIL, PebbleColor.Indigo);
+    YAHOO_MAIL(PebbleIconID.NOTIFICATION_YAHOO_MAIL, PebbleColor.Indigo),
 	
     //MOD russa: add notification-type for showing text-messages on Mi-Band 2
     GENERIC_TEXT_ONLY_MESSAGE(PebbleIconID.LOCATION, PebbleColor.Blue);
