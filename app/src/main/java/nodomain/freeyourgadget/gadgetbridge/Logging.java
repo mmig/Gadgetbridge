@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Carsten Pfeiffer
+/*  Copyright (C) 2016-2018 Carsten Pfeiffer
 
     This file is part of Gadgetbridge.
 
@@ -148,7 +148,7 @@ public abstract class Logging {
         }
         StringBuilder builder = new StringBuilder(bytes.length * 5);
         for (byte b : bytes) {
-            builder.append(String.format("0x%2x", b));
+            builder.append(String.format("0x%02x", b));
             builder.append(" ");
         }
         return builder.toString().trim();

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Alberto, Andreas Shimokawa, Carsten Pfeiffer,
+/*  Copyright (C) 2016-2018 Alberto, Andreas Shimokawa, Carsten Pfeiffer,
     ivanovlev, João Paulo Barraca, Pavel Motyrev, Quallenauge
 
     This file is part of Gadgetbridge.
@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.UUID;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.SettingsActivity;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventBatteryInfo;
 import nodomain.freeyourgadget.gadgetbridge.devices.hplus.HPlusConstants;
 import nodomain.freeyourgadget.gadgetbridge.devices.hplus.HPlusCoordinator;
@@ -528,7 +529,7 @@ public class HPlusSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID appUuid, String config) {
+    public void onAppConfiguration(UUID appUuid, String config, Integer id) {
 
     }
 
@@ -538,7 +539,7 @@ public class HPlusSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onFetchActivityData() {
+    public void onFetchRecordedData(int dataTypes) {
 
         if (syncHelper == null){
             syncHelper = new HPlusHandlerThread(gbDevice, getContext(), this);
@@ -635,6 +636,11 @@ public class HPlusSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
+
+    }
+
+    @Override
     public void onAddCalendarEvent(CalendarEventSpec calendarEventSpec) {
 
     }
@@ -646,8 +652,18 @@ public class HPlusSupport extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onSendConfiguration(String config) {
-        LOG.info("Send Configuration: " + config);
-
+        TransactionBuilder builder;
+        try {
+            builder = performInitialized("Sending configuration for option: " + config);
+            switch (config) {
+                case SettingsActivity.PREF_MEASUREMENT_SYSTEM:
+                    setUnit(builder);
+                    break;
+            }
+            builder.queue(getQueue());
+        } catch (IOException e) {
+            GB.toast("Error setting configuration", Toast.LENGTH_LONG, GB.ERROR, e);
+        }
     }
 
     @Override
@@ -829,7 +845,9 @@ public class HPlusSupport extends AbstractBTLEDeviceSupport {
                     LOG.error("Could not convert String to Bytes: " + e.getMessage());
                 }
             }
-            for (int j = 0; j < cs.length; j++)
+
+            final int j0 = (unicode && i != 0) ? 2 : 0;
+            for (int j = j0; j < cs.length; j++)
                 outBytes.add(cs[j]);
         }
 

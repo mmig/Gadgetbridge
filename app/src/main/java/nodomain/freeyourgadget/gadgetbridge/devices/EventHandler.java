@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Julien Pivotto, Kasha, Steffen Liebergeld, Uwe Hermann
 
     This file is part of Gadgetbridge.
@@ -63,11 +63,11 @@ public interface EventHandler {
 
     void onAppDelete(UUID uuid);
 
-    void onAppConfiguration(UUID appUuid, String config);
+    void onAppConfiguration(UUID appUuid, String config, Integer id);
 
     void onAppReorder(UUID uuids[]);
 
-    void onFetchActivityData();
+    void onFetchRecordedData(int dataTypes);
 
     void onReboot();
 
@@ -82,6 +82,8 @@ public interface EventHandler {
     void onScreenshotReq();
 
     void onEnableHeartRateSleepSupport(boolean enable);
+
+    void onSetHeartRateMeasurementInterval(int seconds);
 
     void onAddCalendarEvent(CalendarEventSpec calendarEventSpec);
 

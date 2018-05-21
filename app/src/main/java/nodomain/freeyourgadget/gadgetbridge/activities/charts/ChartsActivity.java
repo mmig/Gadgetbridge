@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Vebryn
 
     This file is part of Gadgetbridge.
@@ -29,20 +29,19 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
@@ -50,6 +49,7 @@ import nodomain.freeyourgadget.gadgetbridge.activities.AbstractFragmentPagerAdap
 import nodomain.freeyourgadget.gadgetbridge.activities.AbstractGBFragmentActivity;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.model.RecordedDataTypes;
 import nodomain.freeyourgadget.gadgetbridge.util.DateTimeUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.DeviceHelper;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
@@ -57,16 +57,11 @@ import nodomain.freeyourgadget.gadgetbridge.util.LimitedQueue;
 
 public class ChartsActivity extends AbstractGBFragmentActivity implements ChartsHost {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ChartsActivity.class);
-
-    private Button mPrevButton;
-    private Button mNextButton;
     private TextView mDateControl;
 
     private Date mStartDate;
     private Date mEndDate;
     private SwipeRefreshLayout swipeLayout;
-    private ViewPager viewPager;
 
     LimitedQueue mActivityAmountCache = new LimitedQueue(60);
 
@@ -84,7 +79,7 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_charts_durationdialog);
 
-            durationLabel = (TextView) findViewById(R.id.charts_duration_label);
+            durationLabel = findViewById(R.id.charts_duration_label);
             setDuration(mDuration);
         }
 
@@ -101,7 +96,7 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            switch (action) {
+            switch (Objects.requireNonNull(action)) {
                 case GBDevice.ACTION_DEVICE_CHANGED:
                     GBDevice dev = intent.getParcelableExtra(GBDevice.EXTRA_DEVICE);
                     refreshBusyState(dev);
@@ -143,7 +138,7 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
             throw new IllegalArgumentException("Must provide a device when invoking this activity");
         }
 
-        swipeLayout = (SwipeRefreshLayout) findViewById(R.id.activity_swipe_layout);
+        swipeLayout = findViewById(R.id.activity_swipe_layout);
         swipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -153,7 +148,7 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
         enableSwipeRefresh(true);
 
         // Set up the ViewPager with the sections adapter.
-        viewPager = (ViewPager) findViewById(R.id.charts_pager);
+        NonSwipeableViewPager viewPager = findViewById(R.id.charts_pager);
         viewPager.setAdapter(getPagerAdapter());
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -170,8 +165,8 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
             }
         });
 
-        dateBar = (ViewGroup) findViewById(R.id.charts_date_bar);
-        mDateControl = (TextView) findViewById(R.id.charts_text_date);
+        dateBar = findViewById(R.id.charts_date_bar);
+        mDateControl = findViewById(R.id.charts_text_date);
         mDateControl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,22 +175,20 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
             }
         });
 
-        mPrevButton = (Button) findViewById(R.id.charts_previous);
+        Button mPrevButton = findViewById(R.id.charts_previous);
         mPrevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 handlePrevButtonClicked();
             }
         });
-        mNextButton = (Button) findViewById(R.id.charts_next);
+        Button mNextButton = findViewById(R.id.charts_next);
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 handleNextButtonClicked();
             }
         });
-
-        LinearLayout mainLayout = (LinearLayout) findViewById(R.id.charts_main_layout);
     }
 
     private String formatDetailedDuration() {
@@ -280,7 +273,7 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
 
     private void fetchActivityData() {
         if (getDevice().isInitialized()) {
-            GBApplication.deviceService().onFetchActivityData();
+            GBApplication.deviceService().onFetchRecordedData(RecordedDataTypes.TYPE_ACTIVITY);
         } else {
             swipeLayout.setRefreshing(false);
             GB.toast(this, getString(R.string.device_not_connected), Toast.LENGTH_SHORT, GB.ERROR);
@@ -361,5 +354,28 @@ public class ChartsActivity extends AbstractGBFragmentActivity implements Charts
             }
             return super.getPageTitle(position);
         }
+    }
+}
+
+class NonSwipeableViewPager extends ViewPager {
+
+    public NonSwipeableViewPager(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (GBApplication.getPrefs().getBoolean("charts_allow_swipe", true)) {
+            return super.onInterceptTouchEvent(ev);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        if (GBApplication.getPrefs().getBoolean("charts_allow_swipe", true)) {
+            return super.onTouchEvent(ev);
+        }
+        return false;
     }
 }

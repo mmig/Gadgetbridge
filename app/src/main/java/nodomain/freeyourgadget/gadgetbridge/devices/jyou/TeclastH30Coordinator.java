@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, protomors, Sami Alaoui
 
     This file is part of Gadgetbridge.
@@ -63,7 +63,7 @@ public class TeclastH30Coordinator extends AbstractDeviceCoordinator {
     @Override
     public DeviceType getSupportedType(GBDeviceCandidate candidate) {
         String name = candidate.getDevice().getName();
-        if (name != null && name.startsWith("TECLAST_H30")) {
+        if (name != null && (name.startsWith("TECLAST_H30") || name.startsWith("TECLAST_H10"))) {
             return DeviceType.TECLASTH30;
         }
         return DeviceType.UNKNOWN;
@@ -85,6 +85,11 @@ public class TeclastH30Coordinator extends AbstractDeviceCoordinator {
     }
 
     @Override
+    public boolean supportsWeather() {
+        return false;
+    }
+
+    @Override
     public DeviceType getDeviceType() {
         return DeviceType.TECLASTH30;
     }
@@ -92,11 +97,6 @@ public class TeclastH30Coordinator extends AbstractDeviceCoordinator {
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return null;
-    }
-
-    @Override
-    public Class<? extends Activity> getPrimaryActivity() {
-        return ChartsActivity.class;
     }
 
     @Override

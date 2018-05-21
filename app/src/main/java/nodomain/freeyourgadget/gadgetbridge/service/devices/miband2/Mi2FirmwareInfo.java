@@ -1,4 +1,5 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Davis
+    Mosenkovs
 
     This file is part of Gadgetbridge.
 
@@ -21,10 +22,11 @@ import java.util.Map;
 
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.DeviceType;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.HuamiFirmwareInfo;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.HuamiFirmwareType;
 import nodomain.freeyourgadget.gadgetbridge.util.ArrayUtils;
-import nodomain.freeyourgadget.gadgetbridge.util.CheckSums;
 
-public class Mi2FirmwareInfo {
+public class Mi2FirmwareInfo extends HuamiFirmwareInfo {
     private static final byte[] FW_HEADER = new byte[]{
             (byte) 0xa3,
             (byte) 0x68,
@@ -46,92 +48,54 @@ public class Mi2FirmwareInfo {
 
     private static final int FW_HEADER_OFFSET = 0x150;
 
-    private static final byte[] FT_HEADER = new byte[] { // HMZK font file (*.ft, *.ft.xx)
-            0x48,
-            0x4d,
-            0x5a,
-            0x4b
-    };
+    private static Map<Integer, String> crcToVersion = new HashMap<>();
 
-    protected static Map<Integer,String> crcToVersion = new HashMap<>();
     static {
         // firmware
         crcToVersion.put(41899, "1.0.0.39");
         crcToVersion.put(49197, "1.0.0.53");
         crcToVersion.put(32450, "1.0.1.28");
         crcToVersion.put(51770, "1.0.1.34");
-        crcToVersion.put(3929, "1.0.1.39");
-
+        crcToVersion.put(3929,  "1.0.1.39");
+        crcToVersion.put(47364, "1.0.1.54");
+        crcToVersion.put(44776, "1.0.1.59");
+        crcToVersion.put(27318, "1.0.1.67");
+        crcToVersion.put(54702, "1.0.1.69");
+        crcToVersion.put(31698, "1.0.1.81");
+        crcToVersion.put(53474, "1.0.1.81 (tph)");
+        crcToVersion.put(46048, "1.0.1.81 (tph as7000)");
+        crcToVersion.put(19930, "1.0.1.81 (tph india)");
         // fonts
         crcToVersion.put(45624, "Font");
-        crcToVersion.put(6377, "Font (En)");
+        crcToVersion.put(6377,  "Font (En)");
     }
-
-    private FirmwareType firmwareType = FirmwareType.FIRMWARE;
-
-    public static String toVersion(int crc16) {
-        return crcToVersion.get(crc16);
-    }
-
-    public static int[] getWhitelistedVersions() {
-        return ArrayUtils.toIntArray(crcToVersion.keySet());
-    }
-
-    private final int crc16;
-
-    private byte[] bytes;
-    private String firmwareVersion;
 
     public Mi2FirmwareInfo(byte[] bytes) {
-        this.bytes = bytes;
-        crc16 = CheckSums.getCRC16(bytes);
-        firmwareVersion = crcToVersion.get(crc16);
-        firmwareType = determineFirmwareType(bytes);
+        super(bytes);
     }
 
-    protected FirmwareType determineFirmwareType(byte[] bytes) {
-        if (ArrayUtils.startsWith(bytes, FT_HEADER)) {
-            return FirmwareType.FONT;
+    protected HuamiFirmwareType determineFirmwareType(byte[] bytes) {
+        if (ArrayUtils.startsWith(bytes, HuamiFirmwareInfo.FT_HEADER)) {
+            return HuamiFirmwareType.FONT;
         }
         if (ArrayUtils.equals(bytes, FW_HEADER, FW_HEADER_OFFSET)) {
             // TODO: this is certainly not a correct validation, but it works for now
-            return FirmwareType.FIRMWARE;
+            return HuamiFirmwareType.FIRMWARE;
         }
-        return FirmwareType.INVALID;
+        return HuamiFirmwareType.INVALID;
     }
 
     public boolean isGenerallyCompatibleWith(GBDevice device) {
         return isHeaderValid() && device.getType() == DeviceType.MIBAND2;
     }
 
-    public boolean isHeaderValid() {
-        return getFirmwareType() != FirmwareType.INVALID;
+    protected Map<Integer, String> getCrcMap() {
+        return crcToVersion;
     }
 
-    public void checkValid() throws IllegalArgumentException {
-    }
-
-    /**
-     * Returns the size of the firmware in number of bytes.
-     * @return
-     */
-    public int getSize() {
-        return bytes.length;
-    }
-
-    public byte[] getBytes() {
-        return bytes;
-    }
-
-    public int getCrc16() {
-        return crc16;
-    }
-
-    public int getFirmwareVersion() {
-        return getCrc16(); // HACK until we know how to determine the version from the fw bytes
-    }
-
-    public FirmwareType getFirmwareType() {
-        return firmwareType;
+    @Override
+    protected String searchFirmwareVersion(byte[] fwbytes) {
+        // does not work for Mi Band 2
+        return null;
     }
 }

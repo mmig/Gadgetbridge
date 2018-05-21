@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Carsten Pfeiffer
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer
 
     This file is part of Gadgetbridge.
 
@@ -50,7 +50,7 @@ public abstract class AbstractMiBandFWHelper {
         }
 
         try (InputStream in = new BufferedInputStream(uriHelper.openInputStream())) {
-            this.fw = FileUtils.readAll(in, 1024 * 1024); // 1 MB
+            this.fw = FileUtils.readAll(in, 1024 * 1536); // 1.5 MB
             determineFirmwareInfo(fw);
         } catch (IOException ex) {
             throw ex; // pass through
@@ -60,6 +60,12 @@ public abstract class AbstractMiBandFWHelper {
             throw new IOException("Error reading firmware file: " + uri.toString(), e);
         }
     }
+
+    /**
+     * Returns a localized, user-visible representation of the kind of firmware to be installed.
+     */
+    @NonNull
+    public abstract String getFirmwareKind();
 
     public abstract int getFirmwareVersion();
 

@@ -1,5 +1,5 @@
-/*  Copyright (C) 2015-2017 Alberto, Andreas Shimokawa, Carsten Pfeiffer,
-    ivanovlev, Julien Pivotto, Kasha, Steffen Liebergeld
+/*  Copyright (C) 2015-2018 Alberto, Andreas Shimokawa, Carsten Pfeiffer,
+    criogenic, Frank Slezak, ivanovlev, Julien Pivotto, Kasha, Steffen Liebergeld
 
     This file is part of Gadgetbridge.
 
@@ -171,12 +171,12 @@ public class GBDeviceService implements DeviceService {
     public void onSetCallState(CallSpec callSpec) {
         Context context = GBApplication.getContext();
         String currentPrivacyMode = GBApplication.getPrefs().getString("pref_call_privacy_mode", GBApplication.getContext().getString(R.string.p_call_privacy_mode_off));
-        if (context.getString(R.string.p_call_privacy_mode_name).equals(currentPrivacyMode)) {
+        if (currentPrivacyMode.equals(context.getString(R.string.p_call_privacy_mode_name))) {
             callSpec.name = callSpec.number;
-        } else if (context.getString(R.string.p_call_privacy_mode_complete).equals(currentPrivacyMode)) {
+        } else if (currentPrivacyMode.equals(context.getString(R.string.p_call_privacy_mode_complete))) {
             callSpec.number = null;
             callSpec.name = null;
-        } else if (context.getString(R.string.pref_call_privacy_mode_number).equals(currentPrivacyMode)) {
+        } else if (currentPrivacyMode.equals(context.getString(R.string.p_call_privacy_mode_number))){
             callSpec.name = coalesce(callSpec.name, getContactDisplayNameByNumber(callSpec.number));
             if (callSpec.name != null && !callSpec.name.equals(callSpec.number)) {
                 callSpec.number = null;
@@ -252,10 +252,14 @@ public class GBDeviceService implements DeviceService {
     }
 
     @Override
-    public void onAppConfiguration(UUID uuid, String config) {
+    public void onAppConfiguration(UUID uuid, String config, Integer id) {
         Intent intent = createIntent().setAction(ACTION_APP_CONFIGURE)
                 .putExtra(EXTRA_APP_UUID, uuid)
                 .putExtra(EXTRA_APP_CONFIG, config);
+
+        if (id != null) {
+            intent.putExtra(EXTRA_APP_CONFIG_ID, id);
+        }
         invokeService(intent);
     }
 
@@ -267,8 +271,9 @@ public class GBDeviceService implements DeviceService {
     }
 
     @Override
-    public void onFetchActivityData() {
-        Intent intent = createIntent().setAction(ACTION_FETCH_ACTIVITY_DATA);
+    public void onFetchRecordedData(int dataTypes) {
+        Intent intent = createIntent().setAction(ACTION_FETCH_RECORDED_DATA)
+                .putExtra(EXTRA_RECORDED_DATA_TYPES, dataTypes);
         invokeService(intent);
     }
 
@@ -319,6 +324,13 @@ public class GBDeviceService implements DeviceService {
     }
 
     @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
+        Intent intent = createIntent().setAction(ACTION_SET_HEARTRATE_MEASUREMENT_INTERVAL)
+                .putExtra(EXTRA_INTERVAL_SECONDS, seconds);
+        invokeService(intent);
+    }
+
+    @Override
     public void onEnableRealtimeHeartRateMeasurement(boolean enable) {
         Intent intent = createIntent().setAction(ACTION_ENABLE_REALTIME_HEARTRATE_MEASUREMENT)
                 .putExtra(EXTRA_BOOLEAN_ENABLE, enable);
@@ -362,16 +374,7 @@ public class GBDeviceService implements DeviceService {
     @Override
     public void onSendWeather(WeatherSpec weatherSpec) {
         Intent intent = createIntent().setAction(ACTION_SEND_WEATHER)
-                .putExtra(EXTRA_WEATHER_TIMESTAMP, weatherSpec.timestamp)
-                .putExtra(EXTRA_WEATHER_LOCATION, weatherSpec.location)
-                .putExtra(EXTRA_WEATHER_CURRENTTEMP, weatherSpec.currentTemp)
-                .putExtra(EXTRA_WEATHER_CURRENTCONDITIONCODE, weatherSpec.currentConditionCode)
-                .putExtra(EXTRA_WEATHER_CURRENTCONDITION, weatherSpec.currentCondition)
-                .putExtra(EXTRA_WEATHER_TODAYMAXTEMP, weatherSpec.todayMaxTemp)
-                .putExtra(EXTRA_WEATHER_TODAYMINTEMP, weatherSpec.todayMinTemp)
-                .putExtra(EXTRA_WEATHER_TOMORROWMAXTEMP, weatherSpec.tomorrowMaxTemp)
-                .putExtra(EXTRA_WEATHER_TOMORROWMINTEMP, weatherSpec.tomorrowMinTemp)
-                .putExtra(EXTRA_WEATHER_TOMORROWCONDITIONCODE, weatherSpec.tomorrowConditionCode);
+                .putExtra(EXTRA_WEATHER, weatherSpec);
         invokeService(intent);
     }
 

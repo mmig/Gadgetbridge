@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer
 
     This file is part of Gadgetbridge.
 
@@ -19,7 +19,22 @@ package nodomain.freeyourgadget.gadgetbridge.deviceevents;
 import java.util.UUID;
 
 public class GBDeviceEventAppMessage extends GBDeviceEvent {
+    public static int TYPE_APPMESSAGE = 0;
+    public static int TYPE_ACK = 1;
+    public static int TYPE_NACK = 2;
+
+    public int type;
     public UUID appUUID;
     public int id;
     public String message;
+
+    @Override
+    public String toString() {
+        return "GBDeviceEventAppMessage{" +
+                "type=" + type +
+                ", appUUID=" + appUUID +
+                ", message='" + message + '\'' +
+                ", id=" + id +
+                '}';
+    }
 }

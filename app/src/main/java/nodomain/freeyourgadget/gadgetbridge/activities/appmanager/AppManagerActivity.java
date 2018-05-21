@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti
 
     This file is part of Gadgetbridge.
@@ -69,7 +69,8 @@ public class AppManagerActivity extends AbstractGBFragmentActivity {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             mGBDevice = extras.getParcelable(GBDevice.EXTRA_DEVICE);
-        } else {
+        }
+        if (mGBDevice == null) {
             throw new IllegalArgumentException("Must provide a device when invoking this activity");
         }
 

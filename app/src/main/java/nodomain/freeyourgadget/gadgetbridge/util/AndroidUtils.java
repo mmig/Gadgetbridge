@@ -1,4 +1,5 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Felix
+    Konstantin Maurer
 
     This file is part of Gadgetbridge.
 
@@ -16,22 +17,42 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package nodomain.freeyourgadget.gadgetbridge.util;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.TextUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Locale;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 
 public class AndroidUtils {
-    public static ParcelUuid[] toParcelUUids(Parcelable[] uuids) {
+    /**
+     * Creates a new {@link ParcelUuid} array with the contents of the given uuids.
+     * The given array is expected to contain only {@link ParcelUuid} elements.
+     * @param uuids an array of {@link ParcelUuid} elements
+     * @return a {@link ParcelUuid} array instance with the same contents
+     */
+    public static ParcelUuid[] toParcelUuids(Parcelable[] uuids) {
         if (uuids == null) {
             return null;
         }
@@ -111,5 +132,99 @@ public class AndroidUtils {
                 + Integer.toHexString(Color.red(color))
                 + Integer.toHexString(Color.green(color))
                 + Integer.toHexString(Color.blue(color));
+    }
+
+    /**
+     * As seen on stackoverflow https://stackoverflow.com/a/36714242/1207186
+     * Try to find the file path of a document uri
+     * @param context the application context
+     * @param uri the Uri for which the path should be resolved
+     * @return the path corresponding to the Uri as a String
+     * @throws IllegalArgumentException on any problem decoding the uri to a path
+     */
+    public static @NonNull String getFilePath(@NonNull Context context, @NonNull Uri uri) throws IllegalArgumentException {
+        try {
+            String path = internalGetFilePath(context, uri);
+            if (TextUtils.isEmpty(path)) {
+                throw new IllegalArgumentException("Unable to decode the given uri to a file path: " + uri);
+            }
+            return path;
+        } catch (IllegalArgumentException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Unable to decode the given uri to a file path: " + uri, ex);
+        }
+    }
+
+    /**
+     * As seen on stackoverflow https://stackoverflow.com/a/36714242/1207186
+     * Try to find the file path of a document uri
+     * @param context the application context
+     * @param uri the Uri for which the path should be resolved
+     * @return the path corresponding to the Uri as a String
+     * @throws URISyntaxException
+    */
+    private static @Nullable String internalGetFilePath(@NonNull Context context, @NonNull Uri uri) throws URISyntaxException {
+        String selection = null;
+        String[] selectionArgs = null;
+
+        // Uri is different in versions after KITKAT (Android 4.4), we need to
+        if (Build.VERSION.SDK_INT >= 19 && DocumentsContract.isDocumentUri(context.getApplicationContext(), uri)) {
+            if ("com.android.externalstorage.documents".equals(uri.getAuthority())) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                return Environment.getExternalStorageDirectory() + "/" + split[1];
+            } else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
+                final String id = DocumentsContract.getDocumentId(uri);
+                if (!TextUtils.isEmpty(id)) {
+                    if (id.startsWith("raw:")) {
+                        return id.replaceFirst("raw:", "");
+                    }
+                    uri = ContentUris.withAppendedId(
+                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                }
+            } else if ("com.android.providers.media.documents".equals(uri.getAuthority())) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                if ("image".equals(type)) {
+                    uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+                selection = "_id=?";
+                selectionArgs = new String[]{
+                        split[1]
+                };
+            }
+        }
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            String[] projection = {
+                    MediaStore.Images.Media.DATA
+            };
+            Cursor cursor = null;
+            cursor = context.getContentResolver()
+                    .query(uri, projection, selection, selectionArgs, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            if (cursor.moveToFirst()) {
+                return cursor.getString(column_index);
+            }
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+        throw new IllegalArgumentException("Unable to decode the given uri to a file path: " + uri);
+    }
+
+    public static void viewFile(String path, String action, Context context) throws IOException {
+        Intent intent = new Intent(action);
+        File file = new File(path);
+
+        Uri contentUri = FileProvider.getUriForFile(context,
+                context.getApplicationContext().getPackageName() + ".screenshot_provider", file);
+        intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.setData(contentUri);
+        context.startActivity(intent);
     }
 }

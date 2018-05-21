@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer
 
     This file is part of Gadgetbridge.
 
@@ -196,7 +196,7 @@ public class VibratissimoSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID appUuid, String config) {
+    public void onAppConfiguration(UUID appUuid, String config, Integer id) {
 
     }
 
@@ -206,7 +206,7 @@ public class VibratissimoSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onFetchActivityData() {
+    public void onFetchRecordedData(int dataTypes) {
 
     }
 
@@ -250,6 +250,11 @@ public class VibratissimoSupport extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onEnableHeartRateSleepSupport(boolean enable) {
+
+    }
+
+    @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
 
     }
 

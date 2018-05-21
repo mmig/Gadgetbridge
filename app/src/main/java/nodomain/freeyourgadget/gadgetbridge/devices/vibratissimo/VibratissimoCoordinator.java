@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti
 
     This file is part of Gadgetbridge.
@@ -53,11 +53,6 @@ public class VibratissimoCoordinator extends AbstractDeviceCoordinator {
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return null;
-    }
-
-    @Override
-    public Class<? extends Activity> getPrimaryActivity() {
-        return VibrationActivity.class;
     }
 
     @Override
@@ -123,6 +118,11 @@ public class VibratissimoCoordinator extends AbstractDeviceCoordinator {
     @Override
     public boolean supportsRealtimeData() {
         return false; // hmmm well, it has a temperature sensor :D
+    }
+
+    @Override
+    public boolean supportsWeather() {
+        return false;
     }
 
     @Override

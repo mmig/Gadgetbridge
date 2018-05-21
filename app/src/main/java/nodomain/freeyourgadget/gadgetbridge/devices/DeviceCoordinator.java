@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, JohnnySun, Uwe Hermann
 
     This file is part of Gadgetbridge.
@@ -124,15 +124,6 @@ public interface DeviceCoordinator {
     Class<? extends Activity> getPairingActivity();
 
     /**
-     * Returns the Activity class that will be used as the primary activity
-     * for the given device.
-     *
-     * @return the primary activity class, or null if none
-     */
-    @Nullable
-    Class<? extends Activity> getPrimaryActivity();
-
-    /**
      * Returns true if activity data fetching is supported by the device
      * (with this coordinator).
      *
@@ -147,6 +138,14 @@ public interface DeviceCoordinator {
      * @return
      */
     boolean supportsActivityTracking();
+
+    /**
+     * Indicates whether the device supports recording dedicated activity tracks, like
+     * walking, hiking, running, swimming, etc. and retrieving the recorded
+     * data. This is different from the constant activity tracking since the tracks are
+     * usually recorded with additional features, like e.g. GPS.
+     */
+    boolean supportsActivityTracks();
 
     /**
      * Returns true if activity data fetching is supported AND possible at this
@@ -237,5 +236,10 @@ public interface DeviceCoordinator {
      * This can be live HR, steps etc.
      */
     boolean supportsRealtimeData();
-    
+
+    /**
+     * Indicates whether the device supports current weather and/or weather
+     * forecast display.
+     */
+    boolean supportsWeather();
 }

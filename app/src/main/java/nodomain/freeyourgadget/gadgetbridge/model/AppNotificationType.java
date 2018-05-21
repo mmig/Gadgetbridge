@@ -1,5 +1,6 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, AnthonyDiGirolamo, Daniele
-    Gobbetti, Kevin Richter
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, AnthonyDiGirolamo, Daniele
+    Gobbetti, Frank Slezak, Kaz Wolfe, Kevin Richter, Lukas Veneziano, michaelneu,
+    NotAFIle, Tomas Radej
 
     This file is part of Gadgetbridge.
 
@@ -37,6 +38,7 @@ public class AppNotificationType extends HashMap<String, NotificationType> {
         put("com.fsck.k9.material", NotificationType.GENERIC_EMAIL);
         put("com.imaeses.squeaky", NotificationType.GENERIC_EMAIL);
         put("com.android.email", NotificationType.GENERIC_EMAIL);
+        put("ch.protonmail.android", NotificationType.GENERIC_EMAIL);
 
         // Generic SMS
         put("com.moez.QKSMS", NotificationType.GENERIC_SMS);
@@ -68,6 +70,18 @@ public class AppNotificationType extends HashMap<String, NotificationType> {
 
         // Telegram
         put("org.telegram.messenger", NotificationType.TELEGRAM);
+        put("org.telegram.messenger.beta", NotificationType.TELEGRAM);
+        put("org.telegram.plus", NotificationType.TELEGRAM); // "Plus Messenger"
+        put("org.thunderdog.challegram", NotificationType.TELEGRAM);
+
+        // Threema
+        put("ch.threema.app", NotificationType.THREEMA);
+
+        // Kontalk
+        put("org.kontalk", NotificationType.KONTALK);
+
+        // Antox
+        put("chat.tox.antox", NotificationType.ANTOX);
 
         // Twitter
         put("org.mariotaku.twidere", NotificationType.TWITTER);
@@ -84,6 +98,7 @@ public class AppNotificationType extends HashMap<String, NotificationType> {
 
         // Facebook Messenger
         put("com.facebook.orca", NotificationType.FACEBOOK_MESSENGER);
+        put("com.facebook.mlite", NotificationType.FACEBOOK_MESSENGER);
 
         // WhatsApp
         put("com.whatsapp", NotificationType.WHATSAPP);
@@ -121,6 +136,9 @@ public class AppNotificationType extends HashMap<String, NotificationType> {
         // Microsoft Outlook
         put("com.microsoft.office.outlook", NotificationType.OUTLOOK);
 
+        // Business Calendar
+        put("com.appgenix.bizcal", NotificationType.BUSINESS_CALENDAR);
+
         // Yahoo Mail
         put("com.yahoo.mobile.client.android.mail", NotificationType.YAHOO_MAIL);
 
@@ -138,6 +156,9 @@ public class AppNotificationType extends HashMap<String, NotificationType> {
 
         // Transit
         put("com.thetransitapp.droid", NotificationType.TRANSIT);
+
+        // Etar
+        put("ws.xsoh.etar", NotificationType.GENERIC_CALENDAR);
     }
 
 }

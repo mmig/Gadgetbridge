@@ -1,4 +1,4 @@
-/*  Copyright (C) 2017 Sami Alaoui
+/*  Copyright (C) 2017-2018 Andreas Shimokawa, Sami Alaoui
 
     This file is part of Gadgetbridge.
 
@@ -352,7 +352,7 @@ public class TeclastH30Support extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID appUuid, String config) {
+    public void onAppConfiguration(UUID appUuid, String config, Integer id) {
 
     }
 
@@ -362,7 +362,7 @@ public class TeclastH30Support extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onFetchActivityData() {
+    public void onFetchRecordedData(int dataTypes) {
 
     }
 
@@ -426,6 +426,11 @@ public class TeclastH30Support extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onEnableHeartRateSleepSupport(boolean enable) {
+
+    }
+
+    @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
 
     }
 

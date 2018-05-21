@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti
 
     This file is part of Gadgetbridge.
@@ -25,7 +25,6 @@ import android.support.annotation.NonNull;
 import de.greenrobot.dao.query.QueryBuilder;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.GBException;
-import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.appmanager.AppManagerActivity;
 import nodomain.freeyourgadget.gadgetbridge.devices.AbstractDeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.InstallHandler;
@@ -65,11 +64,6 @@ public class PebbleCoordinator extends AbstractDeviceCoordinator {
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return PebblePairingActivity.class;
-    }
-
-    @Override
-    public Class<? extends Activity> getPrimaryActivity() {
-        return AppManagerActivity.class;
     }
 
     @Override
@@ -160,5 +154,10 @@ public class PebbleCoordinator extends AbstractDeviceCoordinator {
     @Override
     public boolean supportsRealtimeData() {
         return false;
+    }
+
+    @Override
+    public boolean supportsWeather() {
+        return true;
     }
 }

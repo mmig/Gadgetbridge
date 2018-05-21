@@ -1,4 +1,4 @@
-/*  Copyright (C) 2017 Alberto, Carsten Pfeiffer, Daniele Gobbetti
+/*  Copyright (C) 2017-2018 Alberto, Carsten Pfeiffer, Daniele Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -140,7 +140,7 @@ public class ImportExportSharedPreferences {
                             GBApplication.setCalendarsBlackList(calendars_blacklist);
                         }
                     } else if (!PREFERENCES.equals(name)) {
-                        throw new Exception("Unkown type " + name);
+                        throw new Exception("Unknown type " + name);
                     }
                     break;
                 case XmlPullParser.END_TAG:

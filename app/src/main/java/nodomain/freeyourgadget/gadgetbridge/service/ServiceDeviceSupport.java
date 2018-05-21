@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Julien Pivotto, Kasha, Steffen Liebergeld
 
     This file is part of Gadgetbridge.
@@ -232,11 +232,11 @@ public class ServiceDeviceSupport implements DeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID uuid, String config) {
+    public void onAppConfiguration(UUID uuid, String config, Integer id) {
         if (checkBusy("app configuration")) {
             return;
         }
-        delegate.onAppConfiguration(uuid, config);
+        delegate.onAppConfiguration(uuid, config, id);
     }
 
     @Override
@@ -248,11 +248,11 @@ public class ServiceDeviceSupport implements DeviceSupport {
     }
 
     @Override
-    public void onFetchActivityData() {
+    public void onFetchRecordedData(int dataTypes) {
         if (checkBusy("fetch activity data")) {
             return;
         }
-        delegate.onFetchActivityData();
+        delegate.onFetchRecordedData(dataTypes);
     }
 
     @Override
@@ -313,10 +313,18 @@ public class ServiceDeviceSupport implements DeviceSupport {
 
     @Override
     public void onEnableHeartRateSleepSupport(boolean enable) {
-        if (checkBusy("enable heartrate sleep support: " + enable)) {
+        if (checkBusy("enable heart rate sleep support: " + enable)) {
             return;
         }
         delegate.onEnableHeartRateSleepSupport(enable);
+    }
+
+    @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
+        if (checkBusy("set heart rate measurement interval: " + seconds + "s")) {
+            return;
+        }
+        delegate.onSetHeartRateMeasurementInterval(seconds);
     }
 
     @Override

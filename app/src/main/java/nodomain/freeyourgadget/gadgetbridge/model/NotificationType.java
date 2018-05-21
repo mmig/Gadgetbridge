@@ -1,5 +1,6 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, AnthonyDiGirolamo, Carsten
-    Pfeiffer, Julien Pivotto, Kevin Richter
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, AnthonyDiGirolamo, Carsten
+    Pfeiffer, Daniele Gobbetti, Frank Slezak, Julien Pivotto, Kaz Wolfe, Kevin
+    Richter, Lukas Veneziano
 
     This file is part of Gadgetbridge.
 
@@ -51,12 +52,16 @@ public enum NotificationType {
     LINKEDIN(PebbleIconID.NOTIFICATION_LINKEDIN, PebbleColor.CobaltBlue),
     MAILBOX(PebbleIconID.NOTIFICATION_MAILBOX, PebbleColor.VividCerulean),
     OUTLOOK(PebbleIconID.NOTIFICATION_OUTLOOK, PebbleColor.BlueMoon),
+    BUSINESS_CALENDAR(PebbleIconID.TIMELINE_CALENDAR, PebbleColor.BlueMoon),
     RIOT(PebbleIconID.NOTIFICATION_HIPCHAT, PebbleColor.LavenderIndigo),
     SIGNAL(PebbleIconID.NOTIFICATION_HIPCHAT, PebbleColor.BlueMoon),
     SKYPE(PebbleIconID.NOTIFICATION_SKYPE, PebbleColor.VividCerulean),
     SLACK(PebbleIconID.NOTIFICATION_SLACK, PebbleColor.Folly),
     SNAPCHAT(PebbleIconID.NOTIFICATION_SNAPCHAT, PebbleColor.Icterine),
     TELEGRAM(PebbleIconID.NOTIFICATION_TELEGRAM, PebbleColor.VividCerulean),
+    THREEMA(PebbleIconID.NOTIFICATION_HIPCHAT, PebbleColor.JaegerGreen),
+    KONTALK(PebbleIconID.NOTIFICATION_HIPCHAT, PebbleColor.JaegerGreen),
+    ANTOX(PebbleIconID.NOTIFICATION_HIPCHAT, PebbleColor.JaegerGreen),
     TRANSIT(PebbleIconID.LOCATION, PebbleColor.JaegerGreen),
     TWITTER(PebbleIconID.NOTIFICATION_TWITTER, PebbleColor.BlueMoon),
     VIBER(PebbleIconID.NOTIFICATION_VIBER, PebbleColor.VividViolet),
@@ -104,6 +109,9 @@ public enum NotificationType {
             case RIOT:
             case SIGNAL:
             case TELEGRAM:
+            case THREEMA:
+            case KONTALK:
+            case ANTOX:
             case WHATSAPP:
             case GOOGLE_MESSENGER:
             case GOOGLE_HANGOUTS:
@@ -113,6 +121,8 @@ public enum NotificationType {
             case KIK:
             case KAKAO_TALK:
             case SLACK:
+            case LINE:
+            case VIBER:
                 return "generic_chat";
             case GMAIL:
             case GOOGLE_INBOX:
@@ -120,9 +130,6 @@ public enum NotificationType {
             case OUTLOOK:
             case YAHOO_MAIL:
                 return "generic_email";
-            case LINE:
-            case VIBER:
-                return "generic_phone";
             case UNKNOWN:
             case GENERIC_TEXT_ONLY_MESSAGE://russa: text-only message type
             default:

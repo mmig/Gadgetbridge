@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Daniele Gobbetti
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Daniele Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -141,11 +141,16 @@ class AppMessageHandlerTimeStylePebble extends AppMessageHandler {
         pairs.add(new Pair<>(messageKeys.get("WeatherUseNightIcon"), (Object) (isNight ? 1 : 0)));
         pairs.add(new Pair<>(messageKeys.get("WeatherTemperature"), (Object) (weatherSpec.currentTemp - 273)));
         pairs.add(new Pair<>(messageKeys.get("WeatherCondition"), (Object) (getIconForConditionCode(weatherSpec.currentConditionCode, isNight))));
-        pairs.add(new Pair<>(messageKeys.get("WeatherForecastCondition"), (Object) (getIconForConditionCode(weatherSpec.tomorrowConditionCode, isNight))));
+
+        if (weatherSpec.forecasts.size() > 0) {
+            WeatherSpec.Forecast tomorrow = weatherSpec.forecasts.get(0);
+            pairs.add(new Pair<>(messageKeys.get("WeatherForecastCondition"), (Object) (getIconForConditionCode(tomorrow.conditionCode, isNight))));
+        }
+
         pairs.add(new Pair<>(messageKeys.get("WeatherForecastHighTemp"), (Object) (weatherSpec.todayMaxTemp - 273)));
         pairs.add(new Pair<>(messageKeys.get("WeatherForecastLowTemp"), (Object) (weatherSpec.todayMinTemp - 273)));
 
-        return mPebbleProtocol.encodeApplicationMessagePush(PebbleProtocol.ENDPOINT_APPLICATIONMESSAGE, mUUID, pairs);
+        return mPebbleProtocol.encodeApplicationMessagePush(PebbleProtocol.ENDPOINT_APPLICATIONMESSAGE, mUUID, pairs, null);
     }
 
     @Override

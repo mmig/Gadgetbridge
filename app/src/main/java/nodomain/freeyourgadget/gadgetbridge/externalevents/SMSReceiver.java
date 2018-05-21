@@ -1,5 +1,5 @@
-/*  Copyright (C) 2015-2017 0nse, Andreas Shimokawa, Carsten Pfeiffer,
-    Normano64
+/*  Copyright (C) 2015-2018 0nse, Andreas Shimokawa, Carsten Pfeiffer,
+    Normano64, Zhong Jianxin
 
     This file is part of Gadgetbridge.
 
@@ -25,6 +25,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.telephony.SmsMessage;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
@@ -54,12 +57,22 @@ public class SMSReceiver extends BroadcastReceiver {
         if (bundle != null) {
             Object[] pdus = (Object[]) bundle.get("pdus");
             if (pdus != null) {
-                for (Object pdu1 : pdus) {
-                    byte[] pdu = (byte[]) pdu1;
-                    SmsMessage message = SmsMessage.createFromPdu(pdu);
-                    notificationSpec.body = message.getDisplayMessageBody();
-                    notificationSpec.phoneNumber = message.getOriginatingAddress();
-                    if (notificationSpec.phoneNumber != null) {
+                int pduSize = pdus.length;
+                Map<String, StringBuilder> messageMap = new LinkedHashMap<>();
+                SmsMessage[] messages = new SmsMessage[pduSize];
+                for (int i = 0; i < pduSize; i++) {
+                    messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+                    String originatingAddress = messages[i].getOriginatingAddress();
+                    if (!messageMap.containsKey(originatingAddress)) {
+                        messageMap.put(originatingAddress, new StringBuilder());
+                    }
+                    messageMap.get(originatingAddress).append(messages[i].getMessageBody());
+                }
+                for (Map.Entry<String, StringBuilder> entry : messageMap.entrySet()) {
+                    String originatingAddress = entry.getKey();
+                    if (originatingAddress != null) {
+                        notificationSpec.body = entry.getValue().toString();
+                        notificationSpec.phoneNumber = originatingAddress;
                         switch (GBApplication.getGrantedInterruptionFilter()) {
                             case NotificationManager.INTERRUPTION_FILTER_ALL:
                                 break;

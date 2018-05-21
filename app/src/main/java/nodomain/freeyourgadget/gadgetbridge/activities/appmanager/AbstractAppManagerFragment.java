@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Lem Dulfo
 
     This file is part of Gadgetbridge.
@@ -147,7 +147,7 @@ public abstract class AbstractAppManagerFragment extends Fragment {
         List<GBDeviceApp> cachedAppList = new ArrayList<>();
         File cachePath;
         try {
-            cachePath = new File(FileUtils.getExternalFilesDir().getPath() + "/pbw-cache");
+            cachePath = PebbleUtils.getPbwCacheDir();
         } catch (IOException e) {
             LOG.warn("could not get external dir while reading pbw cache.");
             return cachedAppList;
@@ -360,89 +360,88 @@ public abstract class AbstractAppManagerFragment extends Fragment {
     }
 
     private boolean onContextItemSelected(MenuItem item, GBDeviceApp selectedApp) {
-        int i = item.getItemId();
-        if (i == R.id.appmanager_app_delete_cache) {
-            String baseName;
-            try {
-                baseName = FileUtils.getExternalFilesDir().getPath() + "/pbw-cache/" + selectedApp.getUUID();
-            } catch (IOException e) {
-                LOG.warn("could not get external dir while trying to access pbw cache.");
-                return true;
-            }
-
-            String[] suffixToDelete = new String[]{".pbw", ".json", "_config.js", "_preset.json"};
-
-            for (String suffix : suffixToDelete) {
-                File fileToDelete = new File(baseName + suffix);
-                if (!fileToDelete.delete()) {
-                    LOG.warn("could not delete file from pbw cache: " + fileToDelete.toString());
-                } else {
-                    LOG.info("deleted file: " + fileToDelete.toString());
+        switch (item.getItemId()) {
+            case R.id.appmanager_app_delete_cache:
+                File pbwCacheDir;
+                try {
+                    pbwCacheDir = PebbleUtils.getPbwCacheDir();
+                } catch (IOException e) {
+                    LOG.warn("could not get external dir while trying to access pbw cache.");
+                    return true;
                 }
-            }
-            AppManagerActivity.deleteFromAppOrderFile("pbwcacheorder.txt", selectedApp.getUUID()); // FIXME: only if successful
-            // fall through
+                String baseName = selectedApp.getUUID().toString();
+                String[] suffixToDelete = new String[]{".pbw", ".json", "_config.js", "_preset.json"};
 
-            if (PebbleUtils.getFwMajor(mGBDevice.getFirmwareVersion()) >= 3) {
-                AppManagerActivity.deleteFromAppOrderFile(mGBDevice.getAddress() + ".watchapps", selectedApp.getUUID()); // FIXME: only if successful
-                AppManagerActivity.deleteFromAppOrderFile(mGBDevice.getAddress() + ".watchfaces", selectedApp.getUUID()); // FIXME: only if successful
-                Intent refreshIntent = new Intent(AbstractAppManagerFragment.ACTION_REFRESH_APPLIST);
-                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(refreshIntent);
-            }
-            GBApplication.deviceService().onAppDelete(selectedApp.getUUID());
-            return true;
-        } else if (i == R.id.appmanager_app_delete) {
-            if (PebbleUtils.getFwMajor(mGBDevice.getFirmwareVersion()) >= 3) {
-                AppManagerActivity.deleteFromAppOrderFile(mGBDevice.getAddress() + ".watchapps", selectedApp.getUUID()); // FIXME: only if successful
-                AppManagerActivity.deleteFromAppOrderFile(mGBDevice.getAddress() + ".watchfaces", selectedApp.getUUID()); // FIXME: only if successful
-                Intent refreshIntent = new Intent(AbstractAppManagerFragment.ACTION_REFRESH_APPLIST);
-                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(refreshIntent);
-            }
-            GBApplication.deviceService().onAppDelete(selectedApp.getUUID());
-            return true;
-        } else if (i == R.id.appmanager_app_reinstall) {
-            File cachePath;
-            try {
-                cachePath = new File(FileUtils.getExternalFilesDir().getPath() + "/pbw-cache/" + selectedApp.getUUID() + ".pbw");
-            } catch (IOException e) {
-                LOG.warn("could not get external dir while trying to access pbw cache.");
+                for (String suffix : suffixToDelete) {
+                    File fileToDelete = new File(pbwCacheDir,baseName + suffix);
+                    if (!fileToDelete.delete()) {
+                        LOG.warn("could not delete file from pbw cache: " + fileToDelete.toString());
+                    } else {
+                        LOG.info("deleted file: " + fileToDelete.toString());
+                    }
+                }
+                AppManagerActivity.deleteFromAppOrderFile("pbwcacheorder.txt", selectedApp.getUUID()); // FIXME: only if successful
+                // fall through
+            case R.id.appmanager_app_delete:
+                if (PebbleUtils.getFwMajor(mGBDevice.getFirmwareVersion()) >= 3) {
+                    AppManagerActivity.deleteFromAppOrderFile(mGBDevice.getAddress() + ".watchapps", selectedApp.getUUID()); // FIXME: only if successful
+                    AppManagerActivity.deleteFromAppOrderFile(mGBDevice.getAddress() + ".watchfaces", selectedApp.getUUID()); // FIXME: only if successful
+                    Intent refreshIntent = new Intent(AbstractAppManagerFragment.ACTION_REFRESH_APPLIST);
+                    LocalBroadcastManager.getInstance(getContext()).sendBroadcast(refreshIntent);
+                }
+                GBApplication.deviceService().onAppDelete(selectedApp.getUUID());
                 return true;
-            }
-            GBApplication.deviceService().onInstallApp(Uri.fromFile(cachePath));
-            return true;
-        } else if (i == R.id.appmanager_health_activate) {
-            GBApplication.deviceService().onInstallApp(Uri.parse("fake://health"));
-            return true;
-        } else if (i == R.id.appmanager_hrm_activate) {
-            GBApplication.deviceService().onInstallApp(Uri.parse("fake://hrm"));
-            return true;
-        } else if (i == R.id.appmanager_weather_activate) {
-            GBApplication.deviceService().onInstallApp(Uri.parse("fake://weather"));
-            return true;
-        } else if (i == R.id.appmanager_health_deactivate || i == R.id.appmanager_hrm_deactivate || i == R.id.appmanager_weather_deactivate) {
-            GBApplication.deviceService().onAppDelete(selectedApp.getUUID());
-            return true;
-        } else if (i == R.id.appmanager_weather_install_provider) {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://f-droid.org/app/ru.gelin.android.weather.notification")));
-            return true;
-        } else if (i == R.id.appmanager_app_configure) {
-            GBApplication.deviceService().onAppStart(selectedApp.getUUID(), true);
+            case R.id.appmanager_app_reinstall:
+                File cachePath;
+                try {
+                    cachePath = new File(PebbleUtils.getPbwCacheDir(), selectedApp.getUUID() + ".pbw");
+                } catch (IOException e) {
+                    LOG.warn("could not get external dir while trying to access pbw cache.");
+                    return true;
+                }
+                GBApplication.deviceService().onInstallApp(Uri.fromFile(cachePath));
+                return true;
+            case R.id.appmanager_health_activate:
+                GBApplication.deviceService().onInstallApp(Uri.parse("fake://health"));
+                return true;
+            case R.id.appmanager_hrm_activate:
+                GBApplication.deviceService().onInstallApp(Uri.parse("fake://hrm"));
+                return true;
+            case R.id.appmanager_weather_activate:
+                GBApplication.deviceService().onInstallApp(Uri.parse("fake://weather"));
+                return true;
+            case R.id.appmanager_health_deactivate:
+            case R.id.appmanager_hrm_deactivate:
+            case R.id.appmanager_weather_deactivate:
+                GBApplication.deviceService().onAppDelete(selectedApp.getUUID());
+                return true;
+            case R.id.appmanager_weather_install_provider:
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://f-droid.org/app/ru.gelin.android.weather.notification")));
+                return true;
+            case R.id.appmanager_app_configure:
+                GBApplication.deviceService().onAppStart(selectedApp.getUUID(), true);
 
-            Intent startIntent = new Intent(getContext().getApplicationContext(), ExternalPebbleJSActivity.class);
-            startIntent.putExtra(DeviceService.EXTRA_APP_UUID, selectedApp.getUUID());
-            startIntent.putExtra(GBDevice.EXTRA_DEVICE, mGBDevice);
-            startActivity(startIntent);
-            return true;
-        } else if (i == R.id.appmanager_app_openinstore) {
-            String url = "https://apps.getpebble.com/en_US/search/" + ((selectedApp.getType() == GBDeviceApp.Type.WATCHFACE) ? "watchfaces" : "watchapps") + "/1?query=" + selectedApp.getName() + "&dev_settings=true";
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse(url));
-            startActivity(intent);
-            return true;
-        } else {
-            return super.onContextItemSelected(item);
+                Intent startIntent = new Intent(getContext().getApplicationContext(), ExternalPebbleJSActivity.class);
+                startIntent.putExtra(DeviceService.EXTRA_APP_UUID, selectedApp.getUUID());
+                startIntent.putExtra(GBDevice.EXTRA_DEVICE, mGBDevice);
+                startIntent.putExtra(ExternalPebbleJSActivity.SHOW_CONFIG, true);
+                startActivity(startIntent);
+                return true;
+            case R.id.appmanager_app_openinstore:
+                String url = "https://apps.getpebble.com/en_US/search/" + ((selectedApp.getType() == GBDeviceApp.Type.WATCHFACE) ? "watchfaces" : "watchapps") + "/1?query=" + selectedApp.getName() + "&dev_settings=true";
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(url));
+                startActivity(intent);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
+
+
+
+
+
 
     @Override
     public void onDestroy() {

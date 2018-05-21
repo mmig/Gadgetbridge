@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Kasha, Steffen Liebergeld
 
     This file is part of Gadgetbridge.
@@ -23,6 +23,8 @@ import android.util.Pair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -30,6 +32,7 @@ import java.util.UUID;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.SettingsActivity;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
 import nodomain.freeyourgadget.gadgetbridge.model.CalendarEventSpec;
@@ -43,6 +46,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.serial.GBDeviceIoThread;
 import nodomain.freeyourgadget.gadgetbridge.service.serial.GBDeviceProtocol;
 
 public class PebbleSupport extends AbstractSerialDeviceSupport {
+    private static final Logger LOG = LoggerFactory.getLogger(PebbleSupport.class);
 
     @Override
     public boolean connect() {
@@ -67,11 +71,34 @@ public class PebbleSupport extends AbstractSerialDeviceSupport {
 
     @Override
     public void onInstallApp(Uri uri) {
-        getDeviceIOThread().installApp(uri, 0);
+        PebbleProtocol pebbleProtocol = (PebbleProtocol) getDeviceProtocol();
+        PebbleIoThread pebbleIoThread = getDeviceIOThread();
+        // catch fake urls first
+        if (uri.equals(Uri.parse("fake://health"))) {
+            getDeviceIOThread().write(pebbleProtocol.encodeActivateHealth(true));
+            String units = GBApplication.getPrefs().getString(SettingsActivity.PREF_MEASUREMENT_SYSTEM, getContext().getString(R.string.p_unit_metric));
+            if (units.equals(getContext().getString(R.string.p_unit_metric))) {
+                pebbleIoThread.write(pebbleProtocol.encodeSetSaneDistanceUnit(true));
+            } else {
+                pebbleIoThread.write(pebbleProtocol.encodeSetSaneDistanceUnit(false));
+            }
+            return;
+        }
+        if (uri.equals(Uri.parse("fake://hrm"))) {
+            getDeviceIOThread().write(pebbleProtocol.encodeActivateHRM(true));
+            return;
+        }
+        if (uri.equals(Uri.parse("fake://weather"))) {
+            getDeviceIOThread().write(pebbleProtocol.encodeActivateWeather(true));
+            return;
+        }
+
+        // it is a real app
+        pebbleIoThread.installApp(uri, 0);
     }
 
     @Override
-    public void onAppConfiguration(UUID uuid, String config) {
+    public void onAppConfiguration(UUID uuid, String config, Integer id) {
         try {
             ArrayList<Pair<Integer, Object>> pairs = new ArrayList<>();
 
@@ -89,12 +116,14 @@ public class PebbleSupport extends AbstractSerialDeviceSupport {
                     object = byteArray;
                 } else if (object instanceof Boolean) {
                     object = (short) (((Boolean) object) ? 1 : 0);
+                } else if (object instanceof Double) {
+                    object = ((Double) object).intValue();
                 }
                 pairs.add(new Pair<>(Integer.parseInt(keyStr), object));
             }
-            getDeviceIOThread().write(((PebbleProtocol) getDeviceProtocol()).encodeApplicationMessagePush(PebbleProtocol.ENDPOINT_APPLICATIONMESSAGE, uuid, pairs));
+            getDeviceIOThread().write(((PebbleProtocol) getDeviceProtocol()).encodeApplicationMessagePush(PebbleProtocol.ENDPOINT_APPLICATIONMESSAGE, uuid, pairs, id));
         } catch (JSONException e) {
-            e.printStackTrace();
+            LOG.error("Error while parsing JSON", e);
         }
     }
 
@@ -105,6 +134,11 @@ public class PebbleSupport extends AbstractSerialDeviceSupport {
 
     @Override
     public void onSetConstantVibration(int intensity) {
+
+    }
+
+    @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
 
     }
 

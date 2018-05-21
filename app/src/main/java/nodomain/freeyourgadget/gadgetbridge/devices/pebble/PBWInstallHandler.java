@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Uwe Hermann
 
     This file is part of Gadgetbridge.
@@ -154,7 +154,7 @@ public class PBWInstallHandler implements InstallHandler {
         File destDir;
         GBDeviceApp app = mPBWReader.getGBDeviceApp();
         try {
-            destDir = new File(FileUtils.getExternalFilesDir() + "/pbw-cache");
+            destDir = PebbleUtils.getPbwCacheDir();
             destDir.mkdirs();
             FileUtils.copyURItoFile(mContext, mUri, new File(destDir, app.getUUID().toString() + ".pbw"));
 

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, protomors
 
     This file is part of Gadgetbridge.
@@ -82,12 +82,6 @@ public class No1F1Coordinator extends AbstractDeviceCoordinator {
         return null;
     }
 
-    @Nullable
-    @Override
-    public Class<? extends Activity> getPrimaryActivity() {
-        return ChartsActivity.class;
-    }
-
     @Override
     public boolean supportsActivityDataFetching() {
         return true;
@@ -115,7 +109,7 @@ public class No1F1Coordinator extends AbstractDeviceCoordinator {
 
     @Override
     public boolean supportsAlarmConfiguration() {
-        return false;
+        return true;
     }
 
     @Override
@@ -150,6 +144,11 @@ public class No1F1Coordinator extends AbstractDeviceCoordinator {
 
     @Override
     public boolean supportsRealtimeData() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsWeather() {
         return false;
     }
 

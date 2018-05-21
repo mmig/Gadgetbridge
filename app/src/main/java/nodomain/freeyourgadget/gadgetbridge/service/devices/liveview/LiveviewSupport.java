@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Daniele Gobbetti
+/*  Copyright (C) 2016-2018 Andreas Shimokawa, Daniele Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -60,7 +60,7 @@ public class LiveviewSupport extends AbstractSerialDeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID uuid, String config) {
+    public void onAppConfiguration(UUID uuid, String config, Integer id) {
         //nothing to do ATM
     }
 
@@ -72,6 +72,11 @@ public class LiveviewSupport extends AbstractSerialDeviceSupport {
     @Override
     public void onSetConstantVibration(int intensity) {
         //nothing to do ATM
+    }
+
+    @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
+
     }
 
     @Override

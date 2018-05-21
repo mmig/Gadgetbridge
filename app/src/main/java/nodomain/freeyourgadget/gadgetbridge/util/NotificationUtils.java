@@ -1,4 +1,5 @@
-/*  Copyright (C) 2017 Carsten Pfeiffer
+/*  Copyright (C) 2017-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+    Gobbetti, Lukas Veneziano
 
     This file is part of Gadgetbridge.
 
@@ -35,14 +36,25 @@ public class NotificationUtils {
                 return StringUtils.replaceUmlauts(formatText(notificationSpec.sender, notificationSpec.subject, notificationSpec.body, lengthBody, lengthSubject, context));
             case GENERIC_NAVIGATION:
                 return StringUtils.replaceUmlauts(StringUtils.getFirstOf(notificationSpec.title, notificationSpec.body));
+            case CONVERSATIONS:
+            case FACEBOOK_MESSENGER:
+            case GOOGLE_MESSENGER:
+            case GOOGLE_HANGOUTS:
+            case HIPCHAT:
+            case KAKAO_TALK:
+            case LINE:
             case RIOT:
             case SIGNAL:
+            case SKYPE:
+            case SNAPCHAT:
             case TELEGRAM:
+            case THREEMA:
+            case KONTALK:
+            case ANTOX:
             case TWITTER:
             case WHATSAPP:
-            case CONVERSATIONS:
-            case FACEBOOK:
-            case FACEBOOK_MESSENGER:
+            case VIBER:
+            case WECHAT:
                 return StringUtils.replaceUmlauts(StringUtils.ensureNotNull(notificationSpec.body));
         }
         return "";

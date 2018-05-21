@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Christian
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Christian
     Fischer, Daniele Gobbetti, Szymon Tomasz Stefanek
 
     This file is part of Gadgetbridge.
@@ -111,11 +111,6 @@ public class MiBandCoordinator extends AbstractDeviceCoordinator {
     }
 
     @Override
-    public Class<? extends Activity> getPrimaryActivity() {
-        return ChartsActivity.class;
-    }
-
-    @Override
     public SampleProvider<? extends AbstractActivitySample> getSampleProvider(GBDevice device, DaoSession session) {
         return new MiBandSampleProvider(device, session);
     }
@@ -174,6 +169,11 @@ public class MiBandCoordinator extends AbstractDeviceCoordinator {
     @Override
     public boolean supportsRealtimeData() {
         return true;
+    }
+
+    @Override
+    public boolean supportsWeather() {
+        return false;
     }
 
     public static boolean hasValidUserInfo() {

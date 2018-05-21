@@ -1,4 +1,4 @@
-/*  Copyright (C) 2017 Andreas Shimokawa, Carsten Pfeiffer
+/*  Copyright (C) 2017-2018 Andreas Shimokawa, Carsten Pfeiffer
 
     This file is part of Gadgetbridge.
 
@@ -19,9 +19,7 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.miband2;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.support.annotation.NonNull;
 
-import nodomain.freeyourgadget.gadgetbridge.devices.miband.MiBand2Service;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.VibrationProfile;
-import nodomain.freeyourgadget.gadgetbridge.devices.miband2.MiBand2Icon;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BLETypeConversions;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BtLEAction;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
@@ -31,6 +29,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.alertnotificat
 import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.alertnotification.NewAlert;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.alertnotification.OverflowStrategy;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.common.SimpleNotification;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.HuamiIcon;
 import nodomain.freeyourgadget.gadgetbridge.util.StringUtils;
 
 public class Mi2TextNotificationStrategy extends Mi2NotificationStrategy {
@@ -64,15 +63,13 @@ public class Mi2TextNotificationStrategy extends Mi2NotificationStrategy {
 
     protected byte[] getNotifyMessage(SimpleNotification simpleNotification) {
         int numAlerts = 1;
-        if (simpleNotification != null) {
-            switch (simpleNotification.getAlertCategory()) {
-                case Email:
-                    return new byte[] { BLETypeConversions.fromUint8(AlertCategory.Email.getId()), BLETypeConversions.fromUint8(numAlerts)};
-                case InstantMessage:
-                    return new byte[] { BLETypeConversions.fromUint8(AlertCategory.CustomMiBand2.getId()), BLETypeConversions.fromUint8(numAlerts), MiBand2Icon.WECHAT};
-                case News:
-                    return new byte[] { BLETypeConversions.fromUint8(AlertCategory.CustomMiBand2.getId()), BLETypeConversions.fromUint8(numAlerts), MiBand2Icon.PENGUIN_1};
+        if (simpleNotification != null && simpleNotification.getNotificationType() != null && simpleNotification.getAlertCategory() != AlertCategory.SMS) {
+            byte customIconId = HuamiIcon.mapToIconId(simpleNotification.getNotificationType());
+            if (customIconId == HuamiIcon.EMAIL) {
+                // unfortunately. the email icon breaks the notification, fall back to a standard AlertCategory
+                return new byte[]{BLETypeConversions.fromUint8(AlertCategory.Email.getId()), BLETypeConversions.fromUint8(numAlerts)};
             }
+            return new byte[]{BLETypeConversions.fromUint8(AlertCategory.CustomHuami.getId()), BLETypeConversions.fromUint8(numAlerts), customIconId};
         }
         return new byte[] { BLETypeConversions.fromUint8(AlertCategory.SMS.getId()), BLETypeConversions.fromUint8(numAlerts)};
     }

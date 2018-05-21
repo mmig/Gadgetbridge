@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, atkyritsis, Carsten Pfeiffer,
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, atkyritsis, Carsten Pfeiffer,
     Christian Fischer, Daniele Gobbetti, freezed-or-frozen, JohnnySun, Julien
     Pivotto, Kasha, Sergey Trofimov, Steffen Liebergeld
 
@@ -443,6 +443,11 @@ public class MiBandSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
+
+    }
+
+    @Override
     public void onAddCalendarEvent(CalendarEventSpec calendarEventSpec) {
         // not supported
     }
@@ -587,7 +592,7 @@ public class MiBandSupport extends AbstractBTLEDeviceSupport {
             }
         };
         String message = NotificationUtils.getPreferredTextFor(notificationSpec, 40, 40, getContext());
-        SimpleNotification simpleNotification = new SimpleNotification(message, AlertCategory.HighPriorityAlert);
+        SimpleNotification simpleNotification = new SimpleNotification(message, AlertCategory.HighPriorityAlert, null);
         performPreferredNotification("alarm clock ringing", simpleNotification, MiBandConst.ORIGIN_ALARM_CLOCK, abortAction);
     }
 
@@ -653,7 +658,7 @@ public class MiBandSupport extends AbstractBTLEDeviceSupport {
                 }
             };
             String message = NotificationUtils.getPreferredTextFor(callSpec);
-            SimpleNotification simpleNotification = new SimpleNotification(message, AlertCategory.IncomingCall);
+            SimpleNotification simpleNotification = new SimpleNotification(message, AlertCategory.IncomingCall, null);
             performPreferredNotification("incoming call", simpleNotification, MiBandConst.ORIGIN_INCOMING_CALL, abortAction);
         } else if ((callSpec.command == CallSpec.CALL_START) || (callSpec.command == CallSpec.CALL_END)) {
             telephoneRinging = false;
@@ -745,7 +750,7 @@ public class MiBandSupport extends AbstractBTLEDeviceSupport {
                     return !isLocatingDevice;
                 }
             };
-            SimpleNotification simpleNotification = new SimpleNotification(getContext().getString(R.string.find_device_you_found_it), AlertCategory.HighPriorityAlert);
+            SimpleNotification simpleNotification = new SimpleNotification(getContext().getString(R.string.find_device_you_found_it), AlertCategory.HighPriorityAlert, null);
             performDefaultNotification("locating device", simpleNotification, (short) 255, abortAction);
         }
     }
@@ -756,7 +761,7 @@ public class MiBandSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onFetchActivityData() {
+    public void onFetchRecordedData(int dataTypes) {
         try {
             new FetchActivityOperation(this).perform();
         } catch (IOException ex) {
@@ -844,7 +849,7 @@ public class MiBandSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID uuid, String config) {
+    public void onAppConfiguration(UUID uuid, String config, Integer id) {
         // not supported
     }
 

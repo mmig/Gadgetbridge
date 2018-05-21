@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Normano64
 
     This file is part of Gadgetbridge.
@@ -19,11 +19,17 @@ package nodomain.freeyourgadget.gadgetbridge;
 
 import android.annotation.TargetApi;
 import android.app.Application;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.NotificationManager.Policy;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -52,6 +58,7 @@ import nodomain.freeyourgadget.gadgetbridge.database.DBHelper;
 import nodomain.freeyourgadget.gadgetbridge.database.DBOpenHelper;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceManager;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoMaster;
+import nodomain.freeyourgadget.gadgetbridge.externalevents.BluetoothStateChangeReceiver;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceService;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityUser;
@@ -63,6 +70,8 @@ import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import nodomain.freeyourgadget.gadgetbridge.util.GBPrefs;
 import nodomain.freeyourgadget.gadgetbridge.util.LimitedQueue;
 import nodomain.freeyourgadget.gadgetbridge.util.Prefs;
+
+import static nodomain.freeyourgadget.gadgetbridge.util.GB.NOTIFICATION_CHANNEL_ID;
 
 /**
  * Main Application class that initializes and provides access to certain things like
@@ -109,6 +118,7 @@ public class GBApplication extends Application {
     private static Locale language;
 
     private DeviceManager deviceManager;
+    private BluetoothStateChangeReceiver bluetoothStateChangeReceiver;
 
     public static void quit() {
         GB.log("Quitting Gadgetbridge...", GB.INFO, null);
@@ -172,6 +182,18 @@ public class GBApplication extends Application {
         if (isRunningMarshmallowOrLater()) {
             notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             //the following will ensure the notification manager is kept alive
+            if(isRunningOreoOrLater()) {
+                NotificationChannel channel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID);
+                if(channel == null) {
+                    channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                            getString(R.string.notification_channel_name),
+                            NotificationManager.IMPORTANCE_LOW);
+                    notificationManager.createNotificationChannel(channel);
+                }
+
+                bluetoothStateChangeReceiver = new BluetoothStateChangeReceiver();
+                registerReceiver(bluetoothStateChangeReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
+            }
             startService(new Intent(this, NotificationCollectorMonitorService.class));
         }
     }
@@ -288,6 +310,13 @@ public class GBApplication extends Application {
 
     public static boolean isRunningMarshmallowOrLater() {
         return VERSION.SDK_INT >= Build.VERSION_CODES.M;
+    }
+    public static boolean isRunningNougatOrLater() {
+        return VERSION.SDK_INT >= Build.VERSION_CODES.N;
+    }
+
+    public static boolean isRunningOreoOrLater(){
+        return VERSION.SDK_INT >= Build.VERSION_CODES.O;
     }
 
     private static boolean isPrioritySender(int prioritySenders, String number) {
@@ -490,7 +519,7 @@ public class GBApplication extends Application {
             case 0:
                 String legacyGender = sharedPrefs.getString("mi_user_gender", null);
                 String legacyHeight = sharedPrefs.getString("mi_user_height_cm", null);
-                String legacyWeigth = sharedPrefs.getString("mi_user_weight_kg", null);
+                String legacyWeight = sharedPrefs.getString("mi_user_weight_kg", null);
                 String legacyYOB = sharedPrefs.getString("mi_user_year_of_birth", null);
                 if (legacyGender != null) {
                     int gender = "male".equals(legacyGender) ? 1 : "female".equals(legacyGender) ? 0 : 2;
@@ -501,8 +530,8 @@ public class GBApplication extends Application {
                     editor.putString(ActivityUser.PREF_USER_HEIGHT_CM, legacyHeight);
                     editor.remove("mi_user_height_cm");
                 }
-                if (legacyWeigth != null) {
-                    editor.putString(ActivityUser.PREF_USER_WEIGHT_KG, legacyWeigth);
+                if (legacyWeight != null) {
+                    editor.putString(ActivityUser.PREF_USER_WEIGHT_KG, legacyWeight);
                     editor.remove("mi_user_weight_kg");
                 }
                 if (legacyYOB != null) {
@@ -590,5 +619,25 @@ public class GBApplication extends Application {
 
     public static Locale getLanguage() {
         return language;
+    }
+
+    public String getVersion() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_META_DATA).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            GB.log("Unable to determine Gadgetbridge's version", GB.WARN, e);
+            return "0.0.0";
+        }
+    }
+
+    public String getNameAndVersion() {
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
+            return String.format("%s %s", appInfo.name, packageInfo.versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            GB.log("Unable to determine Gadgetbridge's name/version", GB.WARN, e);
+            return "Gadgetbridge";
+        }
     }
 }

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2017 protomors
+/*  Copyright (C) 2017-2018 Andreas Shimokawa, Daniele Gobbetti, protomors
 
     This file is part of Gadgetbridge.
 
@@ -19,6 +19,7 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.no1f1;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.net.Uri;
+import android.text.format.DateFormat;
 import android.widget.Toast;
 
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import java.util.UUID;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.SettingsActivity;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHandler;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHelper;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventBatteryInfo;
@@ -66,6 +68,8 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
     public BluetoothGattCharacteristic ctrlCharacteristic = null;
     public BluetoothGattCharacteristic measureCharacteristic = null;
     private List<No1F1ActivitySample> samples = new ArrayList<>();
+    private byte crc = 0;
+    private int firstTimestamp = 0;
 
     public No1F1Support() {
         super(LOG);
@@ -128,13 +132,9 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
                 LOG.info("User data updated");
                 return true;
             case No1F1Constants.CMD_FETCH_STEPS:
-                handleStepData(data);
-                return true;
             case No1F1Constants.CMD_FETCH_SLEEP:
-                handleSleepData(data);
-                return true;
             case No1F1Constants.CMD_FETCH_HEARTRATE:
-                handleHeartRateData(data);
+                handleActivityData(data);
                 return true;
             case No1F1Constants.CMD_REALTIME_HEARTRATE:
                 handleRealtimeHeartRateData(data);
@@ -142,6 +142,7 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
             case No1F1Constants.CMD_NOTIFICATION:
             case No1F1Constants.CMD_ICON:
             case No1F1Constants.CMD_DEVICE_SETTINGS:
+            case No1F1Constants.CMD_DISPLAY_SETTINGS:
                 return true;
             default:
                 LOG.warn("Unhandled characteristic change: " + characteristicUUID + " code: " + Arrays.toString(data));
@@ -170,12 +171,70 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onSetTime() {
-
+        try {
+            TransactionBuilder builder = performInitialized("setTime");
+            Calendar c = GregorianCalendar.getInstance();
+            byte[] datetimeBytes = new byte[]{
+                    No1F1Constants.CMD_DATETIME,
+                    (byte) ((c.get(Calendar.YEAR) / 256) & 0xff),
+                    (byte) (c.get(Calendar.YEAR) % 256),
+                    (byte) (c.get(Calendar.MONTH) + 1),
+                    (byte) c.get(Calendar.DAY_OF_MONTH),
+                    (byte) c.get(Calendar.HOUR_OF_DAY),
+                    (byte) c.get(Calendar.MINUTE),
+                    (byte) c.get(Calendar.SECOND)
+            };
+            builder.write(ctrlCharacteristic, datetimeBytes);
+        } catch (IOException e) {
+            GB.toast(getContext(), "Error setting time: " + e.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
+        }
     }
 
     @Override
     public void onSetAlarms(ArrayList<? extends Alarm> alarms) {
+        try {
+            TransactionBuilder builder = performInitialized("Set alarm");
+            boolean anyAlarmEnabled = false;
+            for (Alarm alarm : alarms) {
+                anyAlarmEnabled |= alarm.isEnabled();
+                Calendar calendar = alarm.getAlarmCal();
 
+                int maxAlarms = 3;
+                if (alarm.getIndex() >= maxAlarms) {
+                    if (alarm.isEnabled()) {
+                        GB.toast(getContext(), "Only 3 alarms are supported.", Toast.LENGTH_LONG, GB.WARN);
+                    }
+                    return;
+                }
+
+                int daysMask = 0;
+                if (alarm.isEnabled()) {
+                    daysMask = alarm.getRepetitionMask();
+                    // Mask for this device starts from sunday and not from monday.
+                    daysMask = (daysMask / 64) + (daysMask >> 1);
+                }
+                byte[] alarmMessage = new byte[]{
+                        No1F1Constants.CMD_ALARM,
+                        (byte) daysMask,
+                        (byte) calendar.get(Calendar.HOUR_OF_DAY),
+                        (byte) calendar.get(Calendar.MINUTE),
+                        (byte) (alarm.isEnabled() ? 2 : 0), // vibration duration
+                        (byte) (alarm.isEnabled() ? 10 : 0), // vibration count
+                        (byte) (alarm.isEnabled() ? 2 : 0), // unknown
+                        (byte) 0,
+                        (byte) (alarm.getIndex() + 1)
+                };
+                builder.write(ctrlCharacteristic, alarmMessage);
+            }
+            builder.queue(getQueue());
+            if (anyAlarmEnabled) {
+                GB.toast(getContext(), getContext().getString(R.string.user_feedback_miband_set_alarms_ok), Toast.LENGTH_SHORT, GB.INFO);
+            } else {
+                GB.toast(getContext(), getContext().getString(R.string.user_feedback_all_alarms_disabled), Toast.LENGTH_SHORT, GB.INFO);
+            }
+        } catch (IOException ex) {
+            GB.toast(getContext(), getContext().getString(R.string.user_feedback_miband_set_alarms_failed), Toast.LENGTH_LONG, GB.ERROR, ex);
+        }
     }
 
     @Override
@@ -230,7 +289,7 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onAppConfiguration(UUID appUuid, String config) {
+    public void onAppConfiguration(UUID appUuid, String config, Integer id) {
 
     }
 
@@ -240,20 +299,8 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onFetchActivityData() {
-        try {
-            samples.clear();
-            TransactionBuilder builder = performInitialized("fetchSteps");
-            builder.add(new SetDeviceBusyAction(getDevice(), getContext().getString(R.string.busy_task_fetch_activity_data), getContext()));
-            byte[] msg = new byte[]{
-                    No1F1Constants.CMD_FETCH_STEPS,
-                    (byte) 0xfa
-            };
-            builder.write(ctrlCharacteristic, msg);
-            performConnected(builder.getTransaction());
-        } catch (IOException e) {
-            GB.toast(getContext(), "Error fetching activity data: " + e.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
-        }
+    public void onFetchRecordedData(int dataTypes) {
+        sendFetchCommand(No1F1Constants.CMD_FETCH_STEPS);
     }
 
     @Override
@@ -304,6 +351,11 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
     }
 
     @Override
+    public void onSetHeartRateMeasurementInterval(int seconds) {
+
+    }
+
+    @Override
     public void onAddCalendarEvent(CalendarEventSpec calendarEventSpec) {
 
     }
@@ -315,7 +367,18 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onSendConfiguration(String config) {
-
+        TransactionBuilder builder;
+        try {
+            builder = performInitialized("Sending configuration for option: " + config);
+            switch (config) {
+                case SettingsActivity.PREF_MEASUREMENT_SYSTEM:
+                    setDisplaySettings(builder);
+                    break;
+            }
+            builder.queue(getQueue());
+        } catch (IOException e) {
+            GB.toast("Error setting configuration", Toast.LENGTH_LONG, GB.ERROR, e);
+        }
     }
 
     @Override
@@ -333,22 +396,35 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
         return true;
     }
 
+    /**
+     * Set display settings (time format and measurement system)
+     *
+     * @param transaction
+     * @return
+     */
+    private No1F1Support setDisplaySettings(TransactionBuilder transaction) {
+        byte[] displayBytes = new byte[]{
+                No1F1Constants.CMD_DISPLAY_SETTINGS,
+                0x00, // 1 - display distance in kilometers, 2 - in miles
+                0x00 // 1 - display 24-hour clock, 2 - for 12-hour with AM/PM
+        };
+        String units = GBApplication.getPrefs().getString(SettingsActivity.PREF_MEASUREMENT_SYSTEM, getContext().getString(R.string.p_unit_metric));
+        if (units.equals(getContext().getString(R.string.p_unit_metric))) {
+            displayBytes[1] = 1;
+        } else {
+            displayBytes[1] = 2;
+        }
+        if (DateFormat.is24HourFormat(getContext())) {
+            displayBytes[2] = 1;
+        } else {
+            displayBytes[2] = 2;
+        }
+        transaction.write(ctrlCharacteristic, displayBytes);
+        return this;
+    }
+
     private void sendSettings(TransactionBuilder builder) {
         // TODO Create custom settings page for changing hardcoded values
-
-        // set date and time
-        Calendar c = GregorianCalendar.getInstance();
-        byte[] datetimeBytes = new byte[]{
-                No1F1Constants.CMD_DATETIME,
-                (byte) ((c.get(Calendar.YEAR) / 256) & 0xff),
-                (byte) (c.get(Calendar.YEAR) % 256),
-                (byte) (c.get(Calendar.MONTH) + 1),
-                (byte) c.get(Calendar.DAY_OF_MONTH),
-                (byte) c.get(Calendar.HOUR_OF_DAY),
-                (byte) c.get(Calendar.MINUTE),
-                (byte) c.get(Calendar.SECOND)
-        };
-        builder.write(ctrlCharacteristic, datetimeBytes);
 
         // set user data
         ActivityUser activityUser = new ActivityUser();
@@ -387,12 +463,7 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
                 0x00
         });
 
-        // display settings
-        builder.write(ctrlCharacteristic, new byte[]{
-                No1F1Constants.CMD_DISPLAY_SETTINGS,
-                0x01, // 1 - display distance in kilometers, 2 - in miles
-                0x01 // 1 - display 24-hour clock, 2 - for 12-hour with AM/PM
-        });
+        setDisplaySettings(builder);
 
         // heart rate measurement mode
         builder.write(ctrlCharacteristic, new byte[]{
@@ -488,64 +559,35 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
         }
     }
 
-    private void handleStepData(byte[] data) {
-        if (data[1] == (byte) 0xfd) {
-            // TODO Check CRC
-            if (samples.size() > 0) {
-                try (DBHandler dbHandler = GBApplication.acquireDB()) {
-                    Long userId = DBHelper.getUser(dbHandler.getDaoSession()).getId();
-                    Long deviceId = DBHelper.getDevice(getDevice(), dbHandler.getDaoSession()).getId();
-                    No1F1SampleProvider provider = new No1F1SampleProvider(getDevice(), dbHandler.getDaoSession());
-                    for (int i = 0; i < samples.size(); i++) {
-                        samples.get(i).setDeviceId(deviceId);
-                        samples.get(i).setUserId(userId);
-                        samples.get(i).setRawKind(ActivityKind.TYPE_ACTIVITY);
-                        samples.get(i).setRawIntensity(samples.get(i).getSteps());
-                        provider.addGBActivitySample(samples.get(i));
-                    }
-                    samples.clear();
-                    LOG.info("Steps data saved");
-                    try {
-                        TransactionBuilder builder = performInitialized("fetchSleep");
-                        byte[] msg = new byte[]{
-                                No1F1Constants.CMD_FETCH_SLEEP,
-                                (byte) 0xfa
-                        };
-                        builder.write(ctrlCharacteristic, msg);
-                        performConnected(builder.getTransaction());
-                    } catch (IOException e) {
-                        GB.toast(getContext(), "Error fetching activity data: " + e.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
-                    }
-
-                } catch (Exception ex) {
-                    GB.toast(getContext(), "Error saving step data: " + ex.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
-                }
-            }
-        } else {
-            No1F1ActivitySample sample = new No1F1ActivitySample();
-
-            Calendar timestamp = GregorianCalendar.getInstance();
-            timestamp.set(Calendar.YEAR, data[1] * 256 + (data[2] & 0xff));
-            timestamp.set(Calendar.MONTH, (data[3] - 1) & 0xff);
-            timestamp.set(Calendar.DAY_OF_MONTH, data[4] & 0xff);
-            timestamp.set(Calendar.HOUR_OF_DAY, data[5] & 0xff);
-            timestamp.set(Calendar.MINUTE, 0);
-            timestamp.set(Calendar.SECOND, 0);
-
-            sample.setTimestamp((int) (timestamp.getTimeInMillis() / 1000L));
-            sample.setSteps(data[6] * 256 + (data[7] & 0xff));
-
-            samples.add(sample);
-            LOG.info("Received steps data for " + String.format("%1$TD %1$TT", timestamp) + ": " +
-                    sample.getSteps() + " steps"
-            );
+    private void sendFetchCommand(byte type) {
+        samples.clear();
+        crc = 0;
+        firstTimestamp = 0;
+        try {
+            TransactionBuilder builder = performInitialized("fetchActivityData");
+            builder.add(new SetDeviceBusyAction(getDevice(), getContext().getString(R.string.busy_task_fetch_activity_data), getContext()));
+            byte[] msg = new byte[]{
+                    type,
+                    (byte) 0xfa
+            };
+            builder.write(ctrlCharacteristic, msg);
+            performConnected(builder.getTransaction());
+        } catch (IOException e) {
+            GB.toast(getContext(), "Error fetching activity data: " + e.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
         }
     }
 
-    private void handleSleepData(byte[] data) {
+    private void handleActivityData(byte[] data) {
         if (data[1] == (byte) 0xfd) {
-            // TODO Check CRC
-            if (samples.size() > 0) {
+            LOG.info("CRC received: " + (data[2] & 0xff) + ", calculated: " + (crc & 0xff));
+            if (data[2] != crc) {
+                GB.toast(getContext(), "Incorrect CRC. Try fetching data again.", Toast.LENGTH_LONG, GB.ERROR);
+                GB.updateTransferNotification("Data transfer failed", false, 0, getContext());
+                if (getDevice().isBusy()) {
+                    getDevice().unsetBusyTask();
+                    getDevice().sendDeviceUpdateIntent(getContext());
+                }
+            } else if (samples.size() > 0) {
                 try (DBHandler dbHandler = GBApplication.acquireDB()) {
                     Long userId = DBHelper.getUser(dbHandler.getDaoSession()).getId();
                     Long deviceId = DBHelper.getDevice(getDevice(), dbHandler.getDaoSession()).getId();
@@ -553,28 +595,32 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
                     for (int i = 0; i < samples.size(); i++) {
                         samples.get(i).setDeviceId(deviceId);
                         samples.get(i).setUserId(userId);
-                        if (samples.get(i).getRawIntensity()<7)
-                            samples.get(i).setRawKind(ActivityKind.TYPE_DEEP_SLEEP);
-                        else
-                            samples.get(i).setRawKind(ActivityKind.TYPE_LIGHT_SLEEP);
+                        if (data[0] == No1F1Constants.CMD_FETCH_STEPS) {
+                            samples.get(i).setRawKind(ActivityKind.TYPE_ACTIVITY);
+                            samples.get(i).setRawIntensity(samples.get(i).getSteps());
+                        } else if (data[0] == No1F1Constants.CMD_FETCH_STEPS) {
+                            if (samples.get(i).getRawIntensity() < 7)
+                                samples.get(i).setRawKind(ActivityKind.TYPE_DEEP_SLEEP);
+                            else
+                                samples.get(i).setRawKind(ActivityKind.TYPE_LIGHT_SLEEP);
+                        }
                         provider.addGBActivitySample(samples.get(i));
                     }
-                    samples.clear();
-                    LOG.info("Sleep data saved");
-                    try {
-                        TransactionBuilder builder = performInitialized("fetchHeartRate");
-                        byte[] msg = new byte[]{
-                                No1F1Constants.CMD_FETCH_HEARTRATE,
-                                (byte) 0xfa
-                        };
-                        builder.write(ctrlCharacteristic, msg);
-                        performConnected(builder.getTransaction());
-                    } catch (IOException e) {
-                        GB.toast(getContext(), "Error fetching heart rate data: " + e.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
+                    LOG.info("Activity data saved");
+                    if (data[0] == No1F1Constants.CMD_FETCH_STEPS) {
+                        sendFetchCommand(No1F1Constants.CMD_FETCH_SLEEP);
+                    } else if (data[0] == No1F1Constants.CMD_FETCH_SLEEP) {
+                        sendFetchCommand(No1F1Constants.CMD_FETCH_HEARTRATE);
+                    } else {
+                        GB.updateTransferNotification("", false, 100, getContext());
+                        if (getDevice().isBusy()) {
+                            getDevice().unsetBusyTask();
+                            getDevice().sendDeviceUpdateIntent(getContext());
+                        }
                     }
-
                 } catch (Exception ex) {
-                    GB.toast(getContext(), "Error saving sleep data: " + ex.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
+                    GB.toast(getContext(), "Error saving activity data: " + ex.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
+                    GB.updateTransferNotification("Data transfer failed", false, 0, getContext());
                 }
             }
         } else {
@@ -585,74 +631,46 @@ public class No1F1Support extends AbstractBTLEDeviceSupport {
             timestamp.set(Calendar.MONTH, (data[3] - 1) & 0xff);
             timestamp.set(Calendar.DAY_OF_MONTH, data[4] & 0xff);
             timestamp.set(Calendar.HOUR_OF_DAY, data[5] & 0xff);
-            timestamp.set(Calendar.MINUTE, data[6] & 0xff);
             timestamp.set(Calendar.SECOND, 0);
 
-            sample.setTimestamp((int) (timestamp.getTimeInMillis() / 1000L));
-            sample.setRawIntensity(data[7] * 256 + (data[8] & 0xff));
-
-            samples.add(sample);
-            LOG.info("Received sleep data for " + String.format("%1$TD %1$TT", timestamp) + ": " +
-                    sample.getRawIntensity() + " rolls"
-            );
-        }
-    }
-
-    private void handleHeartRateData(byte[] data) {
-        if (data[1] == (byte) 0xfd) {
-            // TODO Check CRC
-            if (samples.size() > 0) {
-                try (DBHandler dbHandler = GBApplication.acquireDB()) {
-                    Long userId = DBHelper.getUser(dbHandler.getDaoSession()).getId();
-                    Long deviceId = DBHelper.getDevice(getDevice(), dbHandler.getDaoSession()).getId();
-                    No1F1SampleProvider provider = new No1F1SampleProvider(getDevice(), dbHandler.getDaoSession());
-                    for (int i = 0; i < samples.size(); i++) {
-                        samples.get(i).setDeviceId(deviceId);
-                        samples.get(i).setUserId(userId);
-                        provider.addGBActivitySample(samples.get(i));
-                    }
-                    samples.clear();
-                    LOG.info("Heart rate data saved");
-                    if (getDevice().isBusy()) {
-                        getDevice().unsetBusyTask();
-                        getDevice().sendDeviceUpdateIntent(getContext());
-                    }
-                } catch (Exception ex) {
-                    GB.toast(getContext(), "Error saving heart rate data: " + ex.getLocalizedMessage(), Toast.LENGTH_LONG, GB.ERROR);
-                }
+            int startProgress = 0;
+            if (data[0] == No1F1Constants.CMD_FETCH_STEPS) {
+                timestamp.set(Calendar.MINUTE, 0);
+                sample.setSteps(data[6] * 256 + (data[7] & 0xff));
+                crc ^= (data[6] ^ data[7]);
+            } else if (data[0] == No1F1Constants.CMD_FETCH_SLEEP) {
+                timestamp.set(Calendar.MINUTE, data[6] & 0xff);
+                sample.setRawIntensity(data[7] * 256 + (data[8] & 0xff));
+                crc ^= (data[7] ^ data[8]);
+                startProgress = 33;
+            } else if (data[0] == No1F1Constants.CMD_FETCH_HEARTRATE) {
+                timestamp.set(Calendar.MINUTE, data[6] & 0xff);
+                sample.setHeartRate(data[7] & 0xff);
+                crc ^= (data[6] ^ data[7]);
+                startProgress = 66;
             }
-        } else {
-            No1F1ActivitySample sample = new No1F1ActivitySample();
-
-            Calendar timestamp = GregorianCalendar.getInstance();
-            timestamp.set(Calendar.YEAR, data[1] * 256 + (data[2] & 0xff));
-            timestamp.set(Calendar.MONTH, (data[3] - 1) & 0xff);
-            timestamp.set(Calendar.DAY_OF_MONTH, data[4] & 0xff);
-            timestamp.set(Calendar.HOUR_OF_DAY, data[5] & 0xff);
-            timestamp.set(Calendar.MINUTE, data[6] & 0xff);
-            timestamp.set(Calendar.SECOND, 0);
 
             sample.setTimestamp((int) (timestamp.getTimeInMillis() / 1000L));
-            sample.setHeartRate(data[7] & 0xff);
-
             samples.add(sample);
-            LOG.info("Received heart rate data for " + String.format("%1$TD %1$TT", timestamp) + ": " +
-                    sample.getHeartRate() + " BPM"
-            );
+
+            if (firstTimestamp == 0)
+                firstTimestamp = sample.getTimestamp();
+            int progress = startProgress + 33 * (sample.getTimestamp() - firstTimestamp) /
+                    ((int) (Calendar.getInstance().getTimeInMillis() / 1000L) - firstTimestamp);
+            GB.updateTransferNotification(getContext().getString(R.string.busy_task_fetch_activity_data), true, progress, getContext());
         }
     }
 
     private void handleRealtimeHeartRateData(byte[] data) {
-        if (data.length==2)
-        {
-            if (data[1]==(byte) 0x11)
+        if (data.length == 2) {
+            if (data[1] == (byte) 0x11)
                 LOG.info("Heart rate measurement started.");
             else
                 LOG.info("Heart rate measurement stopped.");
             return;
         }
         // Check if data is valid. Otherwise ignore sample.
-        if (data[2]==0) {
+        if (data[2] == 0) {
             No1F1ActivitySample sample = new No1F1ActivitySample();
             sample.setTimestamp((int) (GregorianCalendar.getInstance().getTimeInMillis() / 1000L));
             sample.setHeartRate(data[3] & 0xff);

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Daniele Gobbetti
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Daniele Gobbetti
 
     This file is part of Gadgetbridge.
 
@@ -155,7 +155,7 @@ class AppMessageHandlerObsidian extends AppMessageHandler {
         pairs.add(new Pair<>(messageKeys.get("MSG_KEY_WEATHER_ICON"), (Object) getIconForConditionCode(weatherSpec.currentConditionCode, isNight))); //celsius
         pairs.add(new Pair<>(messageKeys.get("MSG_KEY_WEATHER_TEMP"), (Object) (weatherSpec.currentTemp - 273)));
 
-        return mPebbleProtocol.encodeApplicationMessagePush(PebbleProtocol.ENDPOINT_APPLICATIONMESSAGE, mUUID, pairs);
+        return mPebbleProtocol.encodeApplicationMessagePush(PebbleProtocol.ENDPOINT_APPLICATIONMESSAGE, mUUID, pairs, null);
     }
 
     @Override

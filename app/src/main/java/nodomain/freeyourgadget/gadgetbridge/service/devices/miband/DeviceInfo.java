@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Sergey Trofimov
 
     This file is part of Gadgetbridge.
@@ -93,6 +93,10 @@ public class DeviceInfo extends AbstractInfo {
             return fwVersion;
         }
         return fw2Version;
+    }
+
+    public int getProfileVersion() {
+        return profileVersion;
     }
 
     public void setTest1AHRMode(boolean enableTestMode) {

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2017 Carsten Pfeiffer
+/*  Copyright (C) 2015-2018 Carsten Pfeiffer
 
     This file is part of Gadgetbridge.
 
@@ -17,9 +17,7 @@
 package nodomain.freeyourgadget.gadgetbridge.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 

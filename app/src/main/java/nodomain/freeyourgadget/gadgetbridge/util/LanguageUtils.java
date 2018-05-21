@@ -1,5 +1,5 @@
-/*  Copyright (C) 2017 Andreas Shimokawa, ivanovlev, lazarosfs, Yaron
-    Shahrabani
+/*  Copyright (C) 2017-2018 Andreas Shimokawa, Daniele Gobbetti, ivanovlev,
+    lazarosfs, McSym28, Ted Stein, Yaron Shahrabani
 
     This file is part of Gadgetbridge.
 
@@ -19,9 +19,10 @@ package nodomain.freeyourgadget.gadgetbridge.util;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
-import java.text.Normalizer;
+
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 
 public class LanguageUtils {
@@ -59,7 +60,25 @@ public class LanguageUtils {
             put('Ξ',"KS");put('Ο',"O");put('Ό',"O");put('Π',"P");put('Ρ',"R");put('Σ',"S");put('Τ',"T");put('Υ',"Y");put('Ύ',"Y");
             put('Ϋ',"Y");put('Φ',"F");put('Χ',"CH");put('Ψ',"PS");put('Ω',"O");put('Ώ',"O");
 
-            //TODO: these must be configurabe. If someone wants to transliterate cyrillic it does not mean his device has no German umlauts
+            //ukrainian characters
+            put('ґ', "gh"); put('є', "je"); put('і', "i"); put('ї', "ji"); put('Ґ', "GH"); put('Є', "JE"); put('І', "I"); put('Ї', "JI");
+
+            // Arabic
+            put('ا', "a"); put('ب', "b"); put('ت', "t"); put('ث', "th"); put('ج', "j"); put('ح', "7"); put('خ', "5");
+            put('د', "d"); put('ذ', "th"); put('ر', "r"); put('ز', "z"); put('س', "s"); put('ش', "sh"); put('ص', "9");
+            put('ض', "9'"); put('ط', "6"); put('ظ', "6'"); put('ع', "3"); put('غ', "3'"); put('ف', "f");
+            put('ق', "q"); put('ك', "k"); put('ل', "l"); put('م', "m"); put('ن', "n"); put('ه', "h");
+            put('و', "w"); put('ي', "y"); put('ى', "a"); put('ﺓ', "");
+            put('آ', "2"); put('ئ', "2"); put('إ', "2"); put('ؤ', "2"); put('أ', "2"); put('ء', "2");
+
+            // Farsi
+            put('پ', "p"); put('چ', "ch"); put('ڜ', "ch"); put('ڤ', "v"); put('ڥ', "v");
+            put('ڨ', "g"); put('گ', "g"); put('ݣ', "g");
+
+            // Polish
+            put('Ł', "L"); put('ł', "l");
+
+            //TODO: these must be configurable. If someone wants to transliterate cyrillic it does not mean his device has no German umlauts
             //all or nothing is really bad here
         }
     };

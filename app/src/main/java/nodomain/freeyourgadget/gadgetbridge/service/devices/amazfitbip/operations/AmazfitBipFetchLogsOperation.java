@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016-2017 Carsten Pfeiffer
+/*  Copyright (C) 2017-2018 Andreas Shimokawa
 
     This file is part of Gadgetbridge.
 
@@ -17,7 +17,6 @@
 package nodomain.freeyourgadget.gadgetbridge.service.devices.amazfitbip.operations;
 
 import android.support.annotation.NonNull;
-import android.support.v4.util.TimeUtils;
 import android.widget.Toast;
 
 import org.slf4j.Logger;
@@ -27,14 +26,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import nodomain.freeyourgadget.gadgetbridge.devices.amazfitbip.AmazfitBipService;
+import nodomain.freeyourgadget.gadgetbridge.devices.huami.amazfitbip.AmazfitBipService;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.MiBand2Service;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BLETypeConversions;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
@@ -51,6 +49,7 @@ public class AmazfitBipFetchLogsOperation extends AbstractFetchOperation {
 
     public AmazfitBipFetchLogsOperation(AmazfitBipSupport support) {
         super(support);
+        setName("fetch logs");
     }
 
     @Override
@@ -62,7 +61,7 @@ public class AmazfitBipFetchLogsOperation extends AbstractFetchOperation {
             return;
         }
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-hhmmss", Locale.US);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
         String filename = "amazfitbip_" + dateFormat.format(new Date()) + ".log";
 
         File outputFile = new File(dir, filename );
@@ -90,8 +89,8 @@ public class AmazfitBipFetchLogsOperation extends AbstractFetchOperation {
     }
 
     @Override
-    protected void handleActivityFetchFinish() {
-        LOG.info("Fetching log data has finished");
+    protected void handleActivityFetchFinish(boolean success) {
+        LOG.info(getName() +" data has finished");
         try {
             logOutputStream.close();
             logOutputStream = null;
@@ -99,7 +98,7 @@ public class AmazfitBipFetchLogsOperation extends AbstractFetchOperation {
             LOG.warn("could not close output stream", e);
             return;
         }
-        super.handleActivityFetchFinish();
+        super.handleActivityFetchFinish(success);
     }
 
     @Override
@@ -114,18 +113,18 @@ public class AmazfitBipFetchLogsOperation extends AbstractFetchOperation {
             lastPacketCounter++;
             bufferActivityData(value);
         } else {
-            GB.toast("Error fetching activity data, invalid package counter: " + value[0], Toast.LENGTH_LONG, GB.ERROR);
-            handleActivityFetchFinish();
+            GB.toast("Error " + getName() + " invalid package counter: " + value[0], Toast.LENGTH_LONG, GB.ERROR);
+            handleActivityFetchFinish(false);
         }
     }
 
     @Override
     protected void bufferActivityData(@NonNull byte[] value) {
         try {
-            logOutputStream.write(Arrays.copyOfRange(value, 1, value.length));
+            logOutputStream.write(value, 1, value.length - 1);
         } catch (IOException e) {
             LOG.warn("could not write to output stream", e);
-            handleActivityFetchFinish();
+            handleActivityFetchFinish(false);
         }
     }
 }

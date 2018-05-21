@@ -1,5 +1,5 @@
-/*  Copyright (C) 2015-2017 Andreas Shimokawa, Carsten Pfeiffer, ivanovlev,
-    JohnnySun, Julien Pivotto, Kasha, Steffen Liebergeld
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Frank Slezak,
+    ivanovlev, JohnnySun, Julien Pivotto, Kasha, Steffen Liebergeld
 
     This file is part of Gadgetbridge.
 
@@ -49,7 +49,7 @@ public interface DeviceService extends EventHandler {
     String ACTION_INSTALL = PREFIX + ".action.install";
     String ACTION_REBOOT = PREFIX + ".action.reboot";
     String ACTION_HEARTRATE_TEST = PREFIX + ".action.heartrate_test";
-    String ACTION_FETCH_ACTIVITY_DATA = PREFIX + ".action.fetch_activity_data";
+    String ACTION_FETCH_RECORDED_DATA = PREFIX + ".action.fetch_activity_data";
     String ACTION_DISCONNECT = PREFIX + ".action.disconnect";
     String ACTION_FIND_DEVICE = PREFIX + ".action.find_device";
     String ACTION_SET_CONSTANT_VIBRATION = PREFIX + ".action.set_constant_vibration";
@@ -58,6 +58,7 @@ public interface DeviceService extends EventHandler {
     String ACTION_REALTIME_SAMPLES = PREFIX + ".action.realtime_samples";
     String ACTION_ENABLE_REALTIME_HEARTRATE_MEASUREMENT = PREFIX + ".action.realtime_hr_measurement";
     String ACTION_ENABLE_HEARTRATE_SLEEP_SUPPORT = PREFIX + ".action.enable_heartrate_sleep_support";
+    String ACTION_SET_HEARTRATE_MEASUREMENT_INTERVAL = PREFIX + ".action.set_heartrate_measurement_intervarl";
     String ACTION_HEARTRATE_MEASUREMENT = PREFIX + ".action.hr_measurement";
     String ACTION_ADD_CALENDAREVENT = PREFIX + ".action.add_calendarevent";
     String ACTION_DELETE_CALENDAREVENT = PREFIX + ".action.delete_calendarevent";
@@ -95,22 +96,15 @@ public interface DeviceService extends EventHandler {
     String EXTRA_APP_UUID = "app_uuid";
     String EXTRA_APP_START = "app_start";
     String EXTRA_APP_CONFIG = "app_config";
+    String EXTRA_APP_CONFIG_ID = "app_config_id";
     String EXTRA_URI = "uri";
     String EXTRA_CONFIG = "config";
     String EXTRA_ALARMS = "alarms";
     String EXTRA_CONNECT_FIRST_TIME = "connect_first_time";
     String EXTRA_BOOLEAN_ENABLE = "enable_realtime_steps";
-
-    String EXTRA_WEATHER_TIMESTAMP = "weather_timestamp";
-    String EXTRA_WEATHER_LOCATION = "weather_location";
-    String EXTRA_WEATHER_CURRENTTEMP = "weather_currenttemp";
-    String EXTRA_WEATHER_CURRENTCONDITIONCODE = "weather_currentconditioncode";
-    String EXTRA_WEATHER_CURRENTCONDITION = "currentcondition";
-    String EXTRA_WEATHER_TODAYMAXTEMP = "weather_todaymaxtemp";
-    String EXTRA_WEATHER_TODAYMINTEMP = "weather_todaymintemp";
-    String EXTRA_WEATHER_TOMORROWMAXTEMP = "weather_tomorrowmaxtemp";
-    String EXTRA_WEATHER_TOMORROWMINTEMP = "weather_tomorrowmintemp";
-    String EXTRA_WEATHER_TOMORROWCONDITIONCODE = "weather_tomorrowconditioncode";
+    String EXTRA_INTERVAL_SECONDS = "interval_seconds";
+    String EXTRA_WEATHER = "weather";
+    String EXTRA_RECORDED_DATA_TYPES = "data_types";
 
     /**
      * Use EXTRA_REALTIME_SAMPLE instead
