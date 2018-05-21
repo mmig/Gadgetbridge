@@ -145,8 +145,13 @@ public abstract class AbstractFetchOperation extends AbstractMiBand2Operation {
                 Calendar startTimestamp = getSupport().fromTimeBytes(Arrays.copyOfRange(value, 7, value.length));
                 setStartTimestamp(startTimestamp);
 
-                GB.toast(getContext().getString(R.string.FetchActivityOperation_about_to_transfer_since,
-                        DateFormat.getDateTimeInstance().format(startTimestamp.getTime())), Toast.LENGTH_LONG, GB.INFO);
+                boolean showToast = !GBApplication.getPrefs().getBoolean("disableSyncToast", false);
+
+                if(showToast) {
+                    GB.toast(getContext().getString(R.string.FetchActivityOperation_about_to_transfer_since,
+                            DateFormat.getDateTimeInstance().format(startTimestamp.getTime())), Toast.LENGTH_LONG, GB.INFO);
+                }
+
             } else {
                 LOG.warn("Unexpected activity metadata: " + Logging.formatBytes(value));
                 handleActivityFetchFinish();
