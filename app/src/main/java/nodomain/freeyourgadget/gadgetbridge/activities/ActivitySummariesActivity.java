@@ -79,11 +79,11 @@ public class ActivitySummariesActivity extends AbstractListActivity<BaseActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         boolean processed = false;
-        switch (item.getItemId()) {
-            case R.id.activity_action_manage_timestamp:
-                resetFetchTimestampToChosenDate();
-                processed = true;
-                break;
+        int i = item.getItemId();
+        if (i == R.id.activity_action_manage_timestamp) {
+            resetFetchTimestampToChosenDate();
+            processed = true;
+
         }
         return processed;
     }
@@ -146,45 +146,44 @@ public class ActivitySummariesActivity extends AbstractListActivity<BaseActivity
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
                 boolean processed = false;
                 SparseBooleanArray checked = getItemListView().getCheckedItemPositions();
-                switch (menuItem.getItemId()) {
-                    case R.id.activity_action_delete:
-                        List<BaseActivitySummary> toDelete = new ArrayList<>();
-                        for(int i = 0; i<  checked.size(); i++) {
-                            if (checked.valueAt(i)) {
-                                toDelete.add(getItemAdapter().getItem(checked.keyAt(i)));
-                            }
+                int i1 = menuItem.getItemId();
+                if (i1 == R.id.activity_action_delete) {
+                    List<BaseActivitySummary> toDelete = new ArrayList<>();
+                    for (int i = 0; i < checked.size(); i++) {
+                        if (checked.valueAt(i)) {
+                            toDelete.add(getItemAdapter().getItem(checked.keyAt(i)));
                         }
-                        deleteItems(toDelete);
-                        processed =  true;
-                        break;
-                    case R.id.activity_action_export:
-                        List<String> paths = new ArrayList<>();
+                    }
+                    deleteItems(toDelete);
+                    processed = true;
+
+                } else if (i1 == R.id.activity_action_export) {
+                    List<String> paths = new ArrayList<>();
 
 
-                        for(int i = 0; i<  checked.size(); i++) {
-                            if (checked.valueAt(i)) {
+                    for (int i = 0; i < checked.size(); i++) {
+                        if (checked.valueAt(i)) {
 
-                                BaseActivitySummary item = getItemAdapter().getItem(checked.keyAt(i));
-                                if (item != null) {
-                                    ActivitySummary summary = (ActivitySummary) item;
+                            BaseActivitySummary item = getItemAdapter().getItem(checked.keyAt(i));
+                            if (item != null) {
+                                ActivitySummary summary = (ActivitySummary) item;
 
-                                    String gpxTrack = summary.getGpxTrack();
-                                    if (gpxTrack != null) {
-                                        paths.add(gpxTrack);
-                                    }
+                                String gpxTrack = summary.getGpxTrack();
+                                if (gpxTrack != null) {
+                                    paths.add(gpxTrack);
                                 }
                             }
                         }
-                        shareMultiple(paths);
-                        processed = true;
-                        break;
-                    case R.id.activity_action_select_all:
-                        for ( int i=0; i < getItemListView().getCount(); i++) {
-                            getItemListView().setItemChecked(i, true);
-                        }
-                        return true; //don't finish actionmode in this case!
-                    default:
-                        break;
+                    }
+                    shareMultiple(paths);
+                    processed = true;
+
+                } else if (i1 == R.id.activity_action_select_all) {
+                    for (int i = 0; i < getItemListView().getCount(); i++) {
+                        getItemListView().setItemChecked(i, true);
+                    }
+                    return true; //don't finish actionmode in this case!
+                } else {
                 }
                 actionMode.finish();
                 return processed;
