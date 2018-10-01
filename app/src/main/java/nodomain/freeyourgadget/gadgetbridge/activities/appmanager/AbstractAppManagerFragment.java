@@ -1,5 +1,5 @@
 /*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti, Lem Dulfo
+    Gobbetti, Konrad Iturbe, Lem Dulfo
 
     This file is part of Gadgetbridge.
 
@@ -88,7 +88,7 @@ public abstract class AbstractAppManagerFragment extends Fragment {
 
     protected void refreshList() {
         appList.clear();
-        ArrayList uuids = AppManagerActivity.getUuidsFromFile(getSortFilename());
+        ArrayList<UUID> uuids = AppManagerActivity.getUuidsFromFile(getSortFilename());
         List<GBDeviceApp> systemApps = getSystemAppsInCategory();
         boolean needsRewrite = false;
         for (GBDeviceApp systemApp : systemApps) {
@@ -106,11 +106,11 @@ public abstract class AbstractAppManagerFragment extends Fragment {
     private void refreshListFromPebble(Intent intent) {
         appList.clear();
         int appCount = intent.getIntExtra("app_count", 0);
-        for (Integer i = 0; i < appCount; i++) {
-            String appName = intent.getStringExtra("app_name" + i.toString());
-            String appCreator = intent.getStringExtra("app_creator" + i.toString());
-            UUID uuid = UUID.fromString(intent.getStringExtra("app_uuid" + i.toString()));
-            GBDeviceApp.Type appType = GBDeviceApp.Type.values()[intent.getIntExtra("app_type" + i.toString(), 0)];
+        for (int i = 0; i < appCount; i++) {
+            String appName = intent.getStringExtra("app_name" + i);
+            String appCreator = intent.getStringExtra("app_creator" + i);
+            UUID uuid = UUID.fromString(intent.getStringExtra("app_uuid" + i));
+            GBDeviceApp.Type appType = GBDeviceApp.Type.values()[intent.getIntExtra("app_type" + i, 0)];
 
             GBDeviceApp app = new GBDeviceApp(uuid, appName, appCreator, "", appType);
             app.setOnDevice(true);
@@ -435,7 +435,7 @@ public abstract class AbstractAppManagerFragment extends Fragment {
             startActivity(startIntent);
             return true;
         } else if (i == R.id.appmanager_app_openinstore) {
-            String url = "https://apps.getpebble.com/en_US/search/" + ((selectedApp.getType() == GBDeviceApp.Type.WATCHFACE) ? "watchfaces" : "watchapps") + "/1?query=" + selectedApp.getName() + "&dev_settings=true";
+                String url = "https://pebble-appstore.romanport.com/" + ((selectedApp.getType() == GBDeviceApp.Type.WATCHFACE) ? "watchfaces" : "watchapps") + "/0/?query=" + selectedApp.getName();
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse(url));
             startActivity(intent);

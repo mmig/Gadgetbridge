@@ -1,6 +1,6 @@
 /*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti, Frank Slezak, Hasan Ammar, Julien Pivotto, Kevin Richter, Normano64,
-    Steffen Liebergeld, Taavi Eomäe, Zhong Jianxin
+    Gobbetti, Frank Slezak, Hasan Ammar, José Rebelo, Julien Pivotto, Kevin
+    Richter, Normano64, Steffen Liebergeld, Taavi Eomäe, Zhong Jianxin
 
     This file is part of Gadgetbridge.
 
@@ -50,6 +50,7 @@ import android.support.v7.graphics.Palette;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -86,6 +87,8 @@ public class NotificationListener extends NotificationListenerService {
 
     private LimitedQueue mActionLookup = new LimitedQueue(16);
 
+    private HashMap<String, Long> notificationTimes = new HashMap<>();
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
         @Override
@@ -113,7 +116,7 @@ public class NotificationListener extends NotificationListenerService {
                             } else {
                                 // ACTION_MUTE
                                 LOG.info("going to mute " + sbn.getPackageName());
-                                GBApplication.addAppToBlacklist(sbn.getPackageName());
+                                GBApplication.addAppToNotifBlacklist(sbn.getPackageName());
                             }
                         }
                     }
@@ -191,6 +194,8 @@ public class NotificationListener extends NotificationListenerService {
         if (shouldIgnore(sbn))
             return;
 
+        Prefs prefs = GBApplication.getPrefs();
+
         switch (GBApplication.getGrantedInterruptionFilter()) {
             case NotificationManager.INTERRUPTION_FILTER_ALL:
                 break;
@@ -264,6 +269,18 @@ public class NotificationListener extends NotificationListenerService {
             LOG.info("Not forwarding notification, FLAG_GROUP_SUMMARY is set and no wearable action present. Notification flags: " + notification.flags);
             return;
         }
+
+        // Ignore too frequent notifications, according to user preference
+        long min_timeout = prefs.getInt("notifications_timeout", 0) * 1000;
+        long cur_time = System.currentTimeMillis();
+        if (notificationTimes.containsKey(source)) {
+            long last_time = notificationTimes.get(source);
+            if (cur_time - last_time < min_timeout) {
+                LOG.info("Ignoring frequent notification, last one was " + (cur_time - last_time) + "ms ago");
+                return;
+            }
+        }
+        notificationTimes.put(source, cur_time);
 
         GBApplication.deviceService().onNotification(notificationSpec);
     }
@@ -426,7 +443,7 @@ public class NotificationListener extends NotificationListenerService {
             }
         }
 
-        if (GBApplication.appIsBlacklisted(source)) {
+        if (GBApplication.appIsNotifBlacklisted(source)) {
             LOG.info("Ignoring notification, application is blacklisted");
             return true;
         }
@@ -446,7 +463,8 @@ public class NotificationListener extends NotificationListenerService {
         //some Apps always mark their notifcations as read-only
         if (NotificationCompat.getLocalOnly(notification) &&
                 type != NotificationType.WECHAT &&
-                type != NotificationType.OUTLOOK) {
+                type != NotificationType.OUTLOOK &&
+                type != NotificationType.SKYPE) { //see https://github.com/Freeyourgadget/Gadgetbridge/issues/1109
             return true;
         }
 

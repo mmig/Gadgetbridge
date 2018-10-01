@@ -1,5 +1,5 @@
 /*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti, Vebryn
+    Gobbetti, Pavel Elagin, Vebryn
 
     This file is part of Gadgetbridge.
 
@@ -19,7 +19,6 @@ package nodomain.freeyourgadget.gadgetbridge.activities.charts;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,15 +84,18 @@ class ActivityAnalysis {
                     }
 
                     if (!stats.containsKey(steps)) {
-                        LOG.info("Adding: " + steps);
+//                        LOG.debug("Adding: " + steps);
                         stats.put(steps, timeDifference);
                     } else {
                         long time = stats.get(steps);
-                        LOG.info("Updating: " + steps + " " + timeDifference + time);
+//                        LOG.debug("Updating: " + steps + " " + timeDifference + time);
                         stats.put(steps, timeDifference + time);
                     }
                 }
             }
+
+            amount.setStartDate(sample.getTimestamp());
+            amount.setEndDate(sample.getTimestamp());
 
             previousAmount = amount;
             previousSample = sample;
@@ -119,7 +121,7 @@ class ActivityAnalysis {
         for (ActivitySample sample : samples) {
             int steps = sample.getSteps();
             if (steps > 0) {
-                totalSteps += sample.getSteps();
+                totalSteps += steps;
             }
         }
         return totalSteps;

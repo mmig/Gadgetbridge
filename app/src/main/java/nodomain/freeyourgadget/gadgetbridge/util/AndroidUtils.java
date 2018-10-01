@@ -1,5 +1,5 @@
 /*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Felix
-    Konstantin Maurer
+    Konstantin Maurer, Taavi Eomäe
 
     This file is part of Gadgetbridge.
 
@@ -181,7 +181,7 @@ public class AndroidUtils {
                         return id.replaceFirst("raw:", "");
                     }
                     uri = ContentUris.withAppendedId(
-                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                            Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
                 }
             } else if ("com.android.providers.media.documents".equals(uri.getAuthority())) {
                 final String docId = DocumentsContract.getDocumentId(uri);

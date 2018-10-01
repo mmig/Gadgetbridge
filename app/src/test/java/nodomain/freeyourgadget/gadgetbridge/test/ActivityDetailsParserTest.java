@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
-import nodomain.freeyourgadget.gadgetbridge.GBException;
 import nodomain.freeyourgadget.gadgetbridge.devices.amazfitbip.BipActivitySummary;
 import nodomain.freeyourgadget.gadgetbridge.entities.Device;
 import nodomain.freeyourgadget.gadgetbridge.entities.User;
@@ -18,7 +17,7 @@ import nodomain.freeyourgadget.gadgetbridge.export.GPXExporter;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityPoint;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityTrack;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BLETypeConversions;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.amazfitbip.ActivityDetailsParser;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.amazfitbip.ActivityDetailsParser;
 import nodomain.freeyourgadget.gadgetbridge.util.DateTimeUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.FileUtils;
 
@@ -48,7 +47,7 @@ public class ActivityDetailsParserTest extends TestBase {
             assertEquals("Elvis", track.getUser().getName());
 
             List<ActivityPoint> trackPoints = track.getTrackPoints();
-            assertEquals(939, trackPoints.size());
+            assertEquals(972, trackPoints.size());
         }
     }
 
@@ -87,7 +86,7 @@ public class ActivityDetailsParserTest extends TestBase {
             ActivityTrack track = parser.parse(FileUtils.readAll(in, MAX_DETAILS));
 
             List<ActivityPoint> trackPoints = track.getTrackPoints();
-            assertEquals(939, trackPoints.size());
+            assertEquals(972, trackPoints.size());
 
 
             GPXExporter exporter = new GPXExporter();

@@ -1,5 +1,90 @@
 ### Changelog
 
+#### Version 0.30.0
+* Amazfit Bip + Mi Band 3: Support for right to left display (configurable) (#976)
+* Add Arabic, Bengali Farsi, Persian, Scandinavian transliteration
+* Add support for some Roidmi FM receivers
+* Mi Band 3: Allow enabling the "Workout" menu item
+* Mi Band 3: Support for night mode configuration
+* Huami devices: fix seldom activity/sports synchronization problem (#1264)
+* Preferences: Make minimum heart rate configurable (lower values will be disregarded) 
+* Preferences: Configure minimum time between notifications
+* Preferences: Group language settings
+* Attempt to fix BLE connection issues on Samsung S devices
+* Week sleep and steps charts: display balance (actual value vs. desired value) 
+* Live Activity: show current/maximum heart rate, display minute steps and total steps and more improvements
+* Live Activity: fix discrepancy between number of steps in Gadgetbridge and wearable device
+* Fix missing caller ID for incoming calls on Android 9
+* Support for easy sharing of log files via the Debug screen
+* Misc small bugfixes
+
+#### Version 0.29.1
+* Mi Band 3: Support setting language to to German, Italian, French, Polish, Japanese, Korean (read wiki)
+* Mi Band 3: Support flashing latest RES files
+* Mi Band 3: Fix notification text not being displayed
+* Mi Band 3/Cor/Bip: Display app name when no app specific icon is available
+* Teclast: add/improve H1 and H3 watch recognition
+* Support transliteration for Lithuanian and Bengali
+* Fix BLE reconnect issues in certain conditions
+* Various fixes for display issues on small screens
+* Fix some potential NPEs
+* WIP: Display start and end of sleep in statistics
+
+#### Version 0.29.0
+* New Device: Initial support for ID115
+* New Device: Initial support for Lenovo Watch9
+* Show splash screen during startup
+* Vertically align device icon in main activity
+* Try to support the google clock application (untested)
+* Amazfit Cor: Allow to configure displayed menu items
+* Amazfit Cor: Support basic music control
+* Amazfit Cor: Fix flashing font files
+* Amazfit Bip: improved GPX export
+* Amazfit Bip: Fix exported GPX file names for *FAT storage
+* Amazfit Bip: Fix current weather not being displayed with later firmwares
+* Amazfit Bip/Cor: Try to fix device being sometimes stuck in connecting state
+* Mi Band 2: Put some device specific settings into its own settings category
+* Mi Band 3: Support disabling of on-device menu items
+* Mi Band 3: Support locking the Mi Band sceen (swipe up to unlock)
+* Mi Band 2/3: New icon
+* NO1 F1: Set time during initialization
+
+#### Version 0.28.1
+* Fix wrong weather icon mapping in rare cases
+* Fix device discovery on Android 4.4
+* Amazfit Bip: Use UTC in gpx tracks for better compatibility with external software
+* Amazfit Bip: Add the (localized) activity type to the gpx filename
+* Amazfit Bip: Fix weather on latest firmwares
+
+#### Version 0.28.0
+* Initial support for ZeTime: time, weather and activity data sync, notification support and music playback control is working
+* Amazfit Bip/Cor: Rework firmware detection to cope with new version scheme
+* Amazfit Bip: Support setting language to Russian
+* Amazfit Cor: Support language switching on newer firmwares
+* Mi Band 3: support setting language (english and spanish tested)
+* Mi Band 3: Fix pairing
+* Mi Band 3: Send AQI to enable display of current temperature
+
+#### Version 0.27.1
+* Pebble: Change appstore search to point to RomanPort's pebble appstore
+* Mi Band 3: Allow flashing fonts (untested)
+* Amazfit Bip: Allow flashing latest firmwares
+* Amazfit Cor: Allow flashing Bip fonts (untested)
+* Allow to limit auto fetch to a user configurable time interval
+
+#### Version 0.27.0
+* Initial support for Mi Band 3 (largely untested, needs to be connected to Mi Fit once)
+* Option for automatic activity sync after screen unlock
+* Allow hiding activity transfer notification on Android Oreo and above
+* Allow blacklisting of pebblekit notifications for individual apps
+* Allow blacklisting all application at once
+* Forward Skype notifications to wearable even if "local only" flag is set
+* Show Gadgetbridge logo behind cards in main activity
+* Always stop BT/BTLE discovery when exiting the discovery activity
+* Amazfit Bip/Cor: Fix scheduled setting for "display on lift wrist" preference
+* Amazfit Bip/Cor: add recent firmwares to whitelist
+* Pebble: Fix a rare crash in webview
+
 #### Version 0.26.5
 * Fix autoreconnect at boot on recent Android versions
 * Bluetooth connection is more stable on Oreo

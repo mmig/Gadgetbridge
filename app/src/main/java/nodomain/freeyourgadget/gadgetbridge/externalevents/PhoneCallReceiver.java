@@ -1,4 +1,5 @@
-/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Normano64
+/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+    Gobbetti, Normano64
 
     This file is part of Gadgetbridge.
 
@@ -40,9 +41,11 @@ public class PhoneCallReceiver extends BroadcastReceiver {
         if (intent.getAction().equals("android.intent.action.NEW_OUTGOING_CALL")) {
             mSavedNumber = intent.getExtras().getString("android.intent.extra.PHONE_NUMBER");
         } else {
-            String number = intent.getExtras().getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
-            int state = tm.getCallState();
-            onCallStateChanged(context, state, number);
+            if (intent.hasExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)) {
+                String number = intent.getExtras().getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
+                int state = tm.getCallState();
+                onCallStateChanged(context, state, number);
+            }
         }
     }
 

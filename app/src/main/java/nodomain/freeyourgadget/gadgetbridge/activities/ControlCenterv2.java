@@ -1,5 +1,5 @@
 /*  Copyright (C) 2016-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti
+    Gobbetti, Taavi Eomäe
 
     This file is part of Gadgetbridge.
 
@@ -43,7 +43,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +69,6 @@ public class ControlCenterv2 extends AppCompatActivity
     }
 
     private DeviceManager deviceManager;
-    private ImageView background;
 
     private GBDeviceAdapterv2 mGBDeviceAdapter;
     private RecyclerView deviceListView;
@@ -127,7 +125,6 @@ public class ControlCenterv2 extends AppCompatActivity
         deviceListView = findViewById(R.id.deviceListView);
         deviceListView.setHasFixedSize(true);
         deviceListView.setLayoutManager(new LinearLayoutManager(this));
-        background = findViewById(R.id.no_items_bg);
 
         List<GBDevice> deviceList = deviceManager.getDevices();
         mGBDeviceAdapter = new GBDeviceAdapterv2(this, deviceList);
@@ -238,28 +235,32 @@ public class ControlCenterv2 extends AppCompatActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
 
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        int i1 = item.getItemId();
+        if (i1 == R.id.action_settings) {
             Intent settingsIntent = new Intent(this, SettingsActivity.class);
             startActivity(settingsIntent);
             return true;
-        } else if (id == R.id.action_debug) {
+        } else if (i1 == R.id.action_debug) {
             Intent debugIntent = new Intent(this, DebugActivity.class);
             startActivity(debugIntent);
             return true;
-        } else if (id == R.id.action_db_management) {
+        } else if (i1 == R.id.action_db_management) {
             Intent dbIntent = new Intent(this, DbManagementActivity.class);
             startActivity(dbIntent);
             return true;
-        } else if (id == R.id.action_quit) {
+        } else if (i1 == R.id.action_blacklist) {
+            Intent blIntent = new Intent(this, AppBlacklistActivity.class);
+            startActivity(blIntent);
+            return true;
+        } else if (i1 == R.id.action_quit) {
             GBApplication.quit();
             return true;
-        } else if (id == R.id.donation_link) {
+        } else if (i1 == R.id.donation_link) {
             Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://liberapay.com/Gadgetbridge")); //TODO: centralize if ever used somewhere else
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
             return true;
-        } else if (id == R.id.external_changelog) {
+        } else if (i1 == R.id.external_changelog) {
             ChangeLog cl = createChangeLog();
             cl.getFullLogDialog().show();
             return true;
@@ -281,13 +282,6 @@ public class ControlCenterv2 extends AppCompatActivity
     }
 
     private void refreshPairedDevices() {
-        List<GBDevice> deviceList = deviceManager.getDevices();
-        if (deviceList.isEmpty()) {
-            background.setVisibility(View.VISIBLE);
-        } else {
-            background.setVisibility(View.INVISIBLE);
-        }
-
         mGBDeviceAdapter.notifyDataSetChanged();
     }
 
@@ -303,6 +297,8 @@ public class ControlCenterv2 extends AppCompatActivity
             wantedPermissions.add(Manifest.permission.READ_CONTACTS);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_DENIED)
             wantedPermissions.add(Manifest.permission.CALL_PHONE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_DENIED)
+            wantedPermissions.add(Manifest.permission.READ_CALL_LOG);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED)
             wantedPermissions.add(Manifest.permission.READ_PHONE_STATE);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.PROCESS_OUTGOING_CALLS) == PackageManager.PERMISSION_DENIED)

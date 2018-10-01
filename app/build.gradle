@@ -19,7 +19,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
     compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    buildToolsVersion "28.0.2"
 
     defaultConfig {
         //DISABLED mc: for use as library
@@ -28,8 +28,8 @@ android {
         targetSdkVersion 27
 
         // Note: always bump BOTH versionCode and versionName!
-        versionName "0.26.5"
-        versionCode 131
+        versionName "0.30.0"
+        versionCode 138
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -88,7 +88,7 @@ dependencies {
     implementation "org.greenrobot:greendao:2.2.1"
     implementation "org.apache.commons:commons-lang3:3.5"
     implementation "org.cyanogenmod:platform.sdk:6.0"
-
+    implementation 'com.jaredrummler:colorpicker:1.0.2'
 //    implementation project(":DaoCore")
 }
 
@@ -146,7 +146,7 @@ task findbugs(type: FindBugs) {
     effort = "default"
     reportLevel = "medium"
     excludeFilter = new File("${project.rootDir}/config/findbugs/findbugs-filter.xml")
-    classes = files("${project.rootDir}/app/build/intermediates/classes")
+    classes = files("${project.rootDir}/app/build/intermediates/javac/release/compileReleaseJavaWithJavac/classes")
     source = fileTree("src/main/java/")
     classpath = files()
     reports {
