@@ -30,7 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import nodomain.freeyourgadget.gadgetbridge.GBApplication;
+import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.NotificationListener;
+import nodomain.freeyourgadget.gadgetbridge.util.GB;
 
 /**
  * Original source by xinghui - see https://gist.github.com/xinghui/b2ddd8cffe55c4b62f5d8846d5545bf9
@@ -44,7 +47,18 @@ public class NotificationCollectorMonitorService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        if(GBApplication.isRunningOreoOrLater()) {// FIXME MOD [russa#as-library] quick-fix for Android >= 8: start as foreground service
+            startForeground(GB.NOTIFICATION_ID, GB.createNotification(getString(R.string.gadgetbridge_running), this));
+        }
         ensureCollectorRunning();
+    }
+
+    @Override
+    public void onDestroy() {
+        if(GBApplication.isRunningOreoOrLater()) {// FIXME MOD [russa#as-library] quick-fix for Android >= 8: start as foreground service
+            stopForeground(true);
+        }
+        super.onDestroy();
     }
 
     @Override

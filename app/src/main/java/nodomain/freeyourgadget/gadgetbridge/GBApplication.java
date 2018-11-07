@@ -195,7 +195,12 @@ public class GBApplication extends Application {
                 bluetoothStateChangeReceiver = new BluetoothStateChangeReceiver();
                 registerReceiver(bluetoothStateChangeReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
             }
-            startService(new Intent(this, NotificationCollectorMonitorService.class));
+
+            if(isRunningOreoOrLater()) {// FIXME MOD [russa#as-library] quick-fix for Android >= 8: start as foreground service
+                startForegroundService(new Intent(this, NotificationCollectorMonitorService.class));
+            } else {
+                startService(new Intent(this, NotificationCollectorMonitorService.class));
+            }
         }
     }
 
