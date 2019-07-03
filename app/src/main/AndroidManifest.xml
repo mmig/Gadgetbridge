@@ -26,6 +26,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-permission android:name="cyanogenmod.permission.ACCESS_WEATHER_MANAGER" />
     <uses-permission android:name="cyanogenmod.permission.READ_WEATHER" />
@@ -65,6 +66,10 @@
         <activity
             android:name=".devices.miband.MiBandPreferencesActivity"
             android:label="@string/preferences_miband_settings"
+            android:parentActivityName=".activities.SettingsActivity" />
+        <activity
+            android:name=".devices.zetime.ZeTimePreferenceActivity"
+            android:label="@string/zetime_title_settings"
             android:parentActivityName=".activities.SettingsActivity" />
         <activity
             android:name=".activities.ActivitySummariesActivity"
@@ -406,16 +411,24 @@
         <activity
             android:name=".activities.ConfigureAlarms"
             android:label="@string/title_activity_set_alarm"
-            android:parentActivityName=".activities.SettingsActivity" />
+            android:parentActivityName=".activities.ControlCenterv2" />
+        <activity
+            android:name=".activities.devicesettings.DeviceSettingsActivity"
+            android:label="@string/title_activity_device_specific_settings" />
         <activity
             android:name=".activities.AlarmDetails"
             android:label="@string/title_activity_alarm_details"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".activities.ConfigureAlarms" />
+            android:parentActivityName=".activities.ConfigureAlarms"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.VibrationActivity"
             android:label="@string/title_activity_vibration"
             android:parentActivityName=".activities.ControlCenterv2" />
+        <activity
+            android:name=".activities.NotificationFilterActivity"
+            android:label="@string/title_activity_notification_filter"
+            android:windowSoftInputMode="stateHidden|adjustPan"
+            android:parentActivityName=".activities.AppBlacklistActivity" />
         <activity
             android:name=".activities.FindPhoneActivity"
             android:label="Find Phone" />
@@ -426,7 +439,7 @@
             android:exported="true" />
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.screenshot_provider"
             android:exported="false"
             android:grantUriPermissions="true">

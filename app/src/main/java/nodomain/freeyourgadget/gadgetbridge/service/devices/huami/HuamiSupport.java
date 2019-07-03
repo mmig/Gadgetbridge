@@ -1,6 +1,6 @@
-/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Christian
+/*  Copyright (C) 2015-2019 Andreas Shimokawa, Carsten Pfeiffer, Christian
     Fischer, Daniele Gobbetti, JohnnySun, José Rebelo, Julien Pivotto, Kasha,
-    Michal Novotny, Sergey Trofimov, Steffen Liebergeld
+    Michal Novotny, Sebastian Kranz, Sergey Trofimov, Steffen Liebergeld
 
     This file is part of Gadgetbridge.
 
@@ -20,14 +20,13 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.huami;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.format.DateFormat;
 import android.widget.Toast;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -41,6 +40,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -61,12 +61,15 @@ import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventVersionInf
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.ActivateDisplayOnLift;
+import nodomain.freeyourgadget.gadgetbridge.devices.huami.DisconnectNotificationSetting;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiConst;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiFWHelper;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiService;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.amazfitbip.AmazfitBipService;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.miband2.MiBand2FWHelper;
+import nodomain.freeyourgadget.gadgetbridge.devices.huami.miband3.MiBand3Coordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.huami.miband3.MiBand3Service;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.DateTimeDisplay;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.DoNotDisturb;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.MiBand2SampleProvider;
@@ -78,7 +81,6 @@ import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
 import nodomain.freeyourgadget.gadgetbridge.entities.Device;
 import nodomain.freeyourgadget.gadgetbridge.entities.MiBandActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.entities.User;
-import nodomain.freeyourgadget.gadgetbridge.impl.GBAlarm;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice.State;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityUser;
@@ -101,15 +103,15 @@ import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattService;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.AbortTransactionAction;
+import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.ConditionalWriteAction;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.SetDeviceStateAction;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.IntentListener;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.alertnotification.AlertCategory;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.deviceinfo.DeviceInfoProfile;
-import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.heartrate.HeartRateProfile;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.common.SimpleNotification;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.actions.StopNotificationAction;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.miband2.Mi2NotificationStrategy;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.miband2.Mi2TextNotificationStrategy;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.actions.StopNotificationAction;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.miband2.Mi2TextOnlyNotificationStrategy;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.operations.FetchActivityOperation;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.operations.FetchSportsSummaryOperation;
@@ -117,6 +119,8 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.operations.Ini
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.operations.UpdateFirmwareOperation;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.miband.NotificationStrategy;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.miband.RealtimeSamplesSupport;
+import nodomain.freeyourgadget.gadgetbridge.service.serial.GBDeviceProtocol;
+import nodomain.freeyourgadget.gadgetbridge.util.AlarmUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.DeviceHelper;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import nodomain.freeyourgadget.gadgetbridge.util.NotificationUtils;
@@ -152,7 +156,6 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(HuamiSupport.class);
     private final DeviceInfoProfile<HuamiSupport> deviceInfoProfile;
-    private final HeartRateProfile<HuamiSupport> heartRateProfile;
     private final IntentListener mListener = new IntentListener() {
         @Override
         public void notify(Intent intent) {
@@ -202,8 +205,6 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         deviceInfoProfile = new DeviceInfoProfile<>(this);
         deviceInfoProfile.addListener(mListener);
         addSupportedProfile(deviceInfoProfile);
-        heartRateProfile = new HeartRateProfile<>(this);
-        addSupportedProfile(heartRateProfile);
     }
 
     @Override
@@ -212,10 +213,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
             heartRateNotifyEnabled = false;
             boolean authenticate = needsAuth;
             needsAuth = false;
-            byte authFlags = HuamiService.AUTH_BYTE;
-            if (gbDevice.getType() == DeviceType.MIBAND3) {
-                authFlags = 0x00;
-            }
+            byte authFlags = getAuthFlags();
             new InitOperation(authenticate, authFlags, this, builder).perform();
             characteristicHRControlPoint = getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_HEART_RATE_CONTROL_POINT);
             characteristicChunked = getCharacteristic(HuamiService.UUID_CHARACTERISTIC_CHUNKEDTRANSFER);
@@ -223,6 +221,10 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
             GB.toast(getContext(), "Initializing Mi Band 2 failed", Toast.LENGTH_SHORT, GB.ERROR, e);
         }
         return builder;
+    }
+
+    protected byte getAuthFlags() {
+        return HuamiService.AUTH_BYTE;
     }
 
     /**
@@ -236,9 +238,9 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     public byte[] getTimeBytes(Calendar calendar, TimeUnit precision) {
         byte[] bytes;
         if (precision == TimeUnit.MINUTES) {
-            bytes = BLETypeConversions.shortCalendarToRawBytes(calendar, true);
+            bytes = BLETypeConversions.shortCalendarToRawBytes(calendar);
         } else if (precision == TimeUnit.SECONDS) {
-            bytes = BLETypeConversions.calendarToRawBytes(calendar, true);
+            bytes = BLETypeConversions.calendarToRawBytes(calendar);
         } else {
             throw new IllegalArgumentException("Unsupported precision, only MINUTES and SECONDS are supported till now");
         }
@@ -250,7 +252,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     public Calendar fromTimeBytes(byte[] bytes) {
-        GregorianCalendar timestamp = BLETypeConversions.rawBytesToCalendar(bytes, true);
+        GregorianCalendar timestamp = BLETypeConversions.rawBytesToCalendar(bytes);
         return timestamp;
     }
 
@@ -279,7 +281,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
      * @param builder
      */
     public void setInitialized(TransactionBuilder builder) {
-        builder.add(new SetDeviceStateAction(getDevice(), State.INITIALIZED, getContext()));
+        builder.add(new SetDeviceStateAction(gbDevice, State.INITIALIZED, getContext()));
     }
 
     // MB2: AVL
@@ -338,14 +340,14 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     public NotificationStrategy getNotificationStrategy() {
-        String firmwareVersion = getDevice().getFirmwareVersion();
+        String firmwareVersion = gbDevice.getFirmwareVersion();
         if (firmwareVersion != null) {
             Version ver = new Version(firmwareVersion);
             if (MiBandConst.MI2_FW_VERSION_MIN_TEXT_NOTIFICATIONS.compareTo(ver) > 0) {
                 return new Mi2NotificationStrategy(this);
             }
         }
-        if (GBApplication.getPrefs().getBoolean(MiBandConst.PREF_MI2_ENABLE_TEXT_NOTIFICATIONS, true)) {
+        if (GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(MiBandConst.PREF_MI2_ENABLE_TEXT_NOTIFICATIONS, true)) {
 
             //russa: support text-only messages:
 //            return new Mi2TextNotificationStrategy(this);
@@ -469,7 +471,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         BluetoothGattCharacteristic characteristic = getCharacteristic(HuamiService.UUID_CHARACTERISTIC_8_USER_SETTINGS);
         if (characteristic != null) {
             builder.notify(characteristic, true);
-            int location = MiBandCoordinator.getWearLocation(getDevice().getAddress());
+            int location = MiBandCoordinator.getWearLocation(gbDevice.getAddress());
             switch (location) {
                 case 0: // left hand
                     builder.write(characteristic, HuamiService.WEAR_LOCATION_LEFT_WRIST);
@@ -524,7 +526,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
      * @param builder
      */
     private HuamiSupport setHeartrateSleepSupport(TransactionBuilder builder) {
-        final boolean enableHrSleepSupport = MiBandCoordinator.getHeartrateSleepSupport(getDevice().getAddress());
+        final boolean enableHrSleepSupport = MiBandCoordinator.getHeartrateSleepSupport(gbDevice.getAddress());
         if (characteristicHRControlPoint != null) {
             builder.notify(characteristicHRControlPoint, true);
             if (enableHrSleepSupport) {
@@ -623,7 +625,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
             TransactionBuilder builder = performInitialized("Set alarm");
             boolean anyAlarmEnabled = false;
             for (Alarm alarm : alarms) {
-                anyAlarmEnabled |= alarm.isEnabled();
+                anyAlarmEnabled |= alarm.getEnabled();
                 queueAlarm(alarm, builder, characteristic);
             }
             builder.queue(getQueue());
@@ -839,18 +841,27 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onReboot() {
+    public void onReset(int flags) {
         try {
-            TransactionBuilder builder = performInitialized("Reboot");
-            sendReboot(builder);
+            TransactionBuilder builder = performInitialized("Reset");
+            if ((flags & GBDeviceProtocol.RESET_FLAGS_FACTORY_RESET) != 0) {
+                sendFactoryReset(builder);
+            } else {
+                sendReboot(builder);
+            }
             builder.queue(getQueue());
         } catch (IOException ex) {
-            LOG.error("Unable to reboot MI", ex);
+            LOG.error("Unable to reset", ex);
         }
     }
 
     public HuamiSupport sendReboot(TransactionBuilder builder) {
         builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_FIRMWARE), new byte[] { HuamiService.COMMAND_FIRMWARE_REBOOT});
+        return this;
+    }
+
+    public HuamiSupport sendFactoryReset(TransactionBuilder builder) {
+        builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), HuamiService.COMMAND_FACTORY_RESET);
         return this;
     }
 
@@ -861,6 +872,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         }
         try {
             TransactionBuilder builder = performInitialized("HeartRateTest");
+            enableNotifyHeartRateMeasurements(true, builder);
             builder.write(characteristicHRControlPoint, stopHeartMeasurementContinuous);
             builder.write(characteristicHRControlPoint, stopHeartMeasurementManual);
             builder.write(characteristicHRControlPoint, startHeartMeasurementManual);
@@ -877,13 +889,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         }
         try {
             TransactionBuilder builder = performInitialized("Enable realtime heart rate measurement");
-            if (heartRateNotifyEnabled != enable) {
-                BluetoothGattCharacteristic heartrateCharacteristic = getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_HEART_RATE_MEASUREMENT);
-                if (heartrateCharacteristic != null) {
-                    builder.notify(heartrateCharacteristic, enable);
-                    heartRateNotifyEnabled = enable;
-                }
-            }
+            enableNotifyHeartRateMeasurements(enable, builder);
             if (enable) {
                 builder.write(characteristicHRControlPoint, stopHeartMeasurementManual);
                 builder.write(characteristicHRControlPoint, startHeartMeasurementContinuous);
@@ -894,6 +900,16 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
             enableRealtimeSamplesTimer(enable);
         } catch (IOException ex) {
             LOG.error("Unable to enable realtime heart rate measurement", ex);
+        }
+    }
+
+    private void enableNotifyHeartRateMeasurements(boolean enable, TransactionBuilder builder) {
+        if (heartRateNotifyEnabled != enable) {
+            BluetoothGattCharacteristic heartrateCharacteristic = getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_HEART_RATE_MEASUREMENT);
+            if (heartrateCharacteristic != null) {
+                builder.notify(heartrateCharacteristic, enable);
+                heartRateNotifyEnabled = enable;
+            }
         }
     }
 
@@ -1044,7 +1060,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         currentButtonPressTime = System.currentTimeMillis();
     }
 
-    public void handleDeviceEvent(byte[] value) {
+    private void handleDeviceEvent(byte[] value) {
         if (value == null || value.length == 0) {
             return;
         }
@@ -1052,13 +1068,14 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
 
         switch (value[0]) {
             case HuamiDeviceEvent.CALL_REJECT:
+                LOG.info("call rejected");
                 callCmd.event = GBDeviceEventCallControl.Event.REJECT;
                 evaluateGBDeviceEvent(callCmd);
                 break;
             case HuamiDeviceEvent.CALL_IGNORE:
-                LOG.info("ignore call (not yet supported)");
-                //callCmd.event = GBDeviceEventCallControl.Event.IGNORE;
-                //evaluateGBDeviceEvent(callCmd);
+                LOG.info("call ignored");
+                callCmd.event = GBDeviceEventCallControl.Event.IGNORE;
+                evaluateGBDeviceEvent(callCmd);
                 break;
             case HuamiDeviceEvent.BUTTON_PRESSED:
                 LOG.info("button pressed");
@@ -1349,7 +1366,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
                     try (DBHandler handler = GBApplication.acquireDB()) {
                         DaoSession session = handler.getDaoSession();
 
-                        Device device = DBHelper.getDevice(getDevice(), session);
+                        Device device = DBHelper.getDevice(gbDevice, session);
                         User user = DBHelper.getUser(session);
                         int ts = (int) (System.currentTimeMillis() / 1000);
                         MiBand2SampleProvider provider = new MiBand2SampleProvider(gbDevice, session);
@@ -1400,27 +1417,29 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
      * @param characteristic
      */
     private void queueAlarm(Alarm alarm, TransactionBuilder builder, BluetoothGattCharacteristic characteristic) {
-        Calendar calendar = alarm.getAlarmCal();
+        Calendar calendar = AlarmUtils.toCalendar(alarm);
 
-        int maxAlarms = 5; // arbitrary at the moment...
-        if (alarm.getIndex() >= maxAlarms) {
-            if (alarm.isEnabled()) {
-                GB.toast(getContext(), "Only 5 alarms are currently supported.", Toast.LENGTH_LONG, GB.WARN);
+        DeviceCoordinator coordinator = DeviceHelper.getInstance().getCoordinator(gbDevice);
+        int maxAlarms = coordinator.getAlarmSlotCount();
+
+        if (alarm.getPosition() >= maxAlarms) {
+            if (alarm.getEnabled()) {
+                GB.toast(getContext(), "Only " + maxAlarms + " alarms are currently supported.", Toast.LENGTH_LONG, GB.WARN);
             }
             return;
         }
 
         int base = 0;
-        if (alarm.isEnabled()) {
+        if (alarm.getEnabled()) {
             base = 128;
         }
-        int daysMask = alarm.getRepetitionMask();
+        int daysMask = alarm.getRepetition();
         if (!alarm.isRepetitive()) {
             daysMask = 128;
         }
         byte[] alarmMessage = new byte[] {
                 (byte) 0x2, // TODO what is this?
-                (byte) (base + alarm.getIndex()), // 128 is the base, alarm slot is added
+                (byte) (base + alarm.getPosition()), // 128 is the base, alarm slot is added
                 (byte) calendar.get(Calendar.HOUR_OF_DAY),
                 (byte) calendar.get(Calendar.MINUTE),
                 (byte) daysMask,
@@ -1474,6 +1493,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
             List<CalendarEvents.CalendarEvent> mEvents = upcomingEvents.getCalendarEventList(getContext());
 
             int iteration = 0;
+
             for (CalendarEvents.CalendarEvent mEvt : mEvents) {
                 if (iteration >= availableSlots || iteration > 2) {
                     break;
@@ -1481,7 +1501,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
                 int slotToUse = 2 - iteration;
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(mEvt.getBegin());
-                Alarm alarm = GBAlarm.createSingleShot(slotToUse, false, calendar);
+                Alarm alarm = AlarmUtils.createSingleShot(slotToUse, false, calendar);
                 queueAlarm(alarm, builder, characteristic);
                 iteration++;
             }
@@ -1501,12 +1521,17 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
                 case MiBandConst.PREF_MI2_GOAL_NOTIFICATION:
                     setGoalNotification(builder);
                     break;
-                case MiBandConst.PREF_ACTIVATE_DISPLAY_ON_LIFT:
-                case MiBandConst.PREF_DISPLAY_ON_LIFT_START:
-                case MiBandConst.PREF_DISPLAY_ON_LIFT_END:
+                case HuamiConst.PREF_ACTIVATE_DISPLAY_ON_LIFT:
+                case HuamiConst.PREF_DISPLAY_ON_LIFT_START:
+                case HuamiConst.PREF_DISPLAY_ON_LIFT_END:
                     setActivateDisplayOnLiftWrist(builder);
                     break;
-                case MiBandConst.PREF_MI2_DISPLAY_ITEMS:
+                case HuamiConst.PREF_DISCONNECT_NOTIFICATION:
+                case HuamiConst.PREF_DISCONNECT_NOTIFICATION_START:
+                case HuamiConst.PREF_DISCONNECT_NOTIFICATION_END:
+                    setDisconnectNotification(builder);
+                    break;
+                case HuamiConst.PREF_DISPLAY_ITEMS:
                     setDisplayItems(builder);
                     break;
                 case MiBandConst.PREF_MI2_ROTATE_WRIST_TO_SWITCH_INFO:
@@ -1515,9 +1540,9 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
                 case ActivityUser.PREF_USER_STEPS_GOAL:
                     setFitnessGoal(builder);
                     break;
-                case MiBandConst.PREF_MI2_DO_NOT_DISTURB:
-                case MiBandConst.PREF_MI2_DO_NOT_DISTURB_START:
-                case MiBandConst.PREF_MI2_DO_NOT_DISTURB_END:
+                case MiBandConst.PREF_DO_NOT_DISTURB:
+                case MiBandConst.PREF_DO_NOT_DISTURB_START:
+                case MiBandConst.PREF_DO_NOT_DISTURB_END:
                     setDoNotDisturb(builder);
                     break;
                 case MiBandConst.PREF_MI2_INACTIVITY_WARNINGS:
@@ -1532,11 +1557,19 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
                 case SettingsActivity.PREF_MEASUREMENT_SYSTEM:
                     setDistanceUnit(builder);
                     break;
+                case MiBandConst.PREF_SWIPE_UNLOCK:
+                    setBandScreenUnlock(builder);
+                    break;
             }
             builder.queue(getQueue());
         } catch (IOException e) {
             GB.toast("Error setting configuration", Toast.LENGTH_LONG, GB.ERROR, e);
         }
+    }
+
+    @Override
+    public void onReadConfiguration(String config) {
+
     }
 
     @Override
@@ -1554,7 +1587,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     private HuamiSupport setDateDisplay(TransactionBuilder builder) {
-        DateTimeDisplay dateTimeDisplay = HuamiCoordinator.getDateDisplay(getContext());
+        DateTimeDisplay dateTimeDisplay = HuamiCoordinator.getDateDisplay(getContext(), gbDevice.getAddress());
         LOG.info("Setting date display to " + dateTimeDisplay);
         switch (dateTimeDisplay) {
             case TIME:
@@ -1590,7 +1623,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     private HuamiSupport setActivateDisplayOnLiftWrist(TransactionBuilder builder) {
-        ActivateDisplayOnLift displayOnLift = HuamiCoordinator.getActivateDisplayOnLiftWrist(getContext());
+        ActivateDisplayOnLift displayOnLift = HuamiCoordinator.getActivateDisplayOnLiftWrist(getContext(), gbDevice.getAddress());
         LOG.info("Setting activate display on lift wrist to " + displayOnLift);
 
         switch (displayOnLift) {
@@ -1605,12 +1638,12 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
 
                 Calendar calendar = GregorianCalendar.getInstance();
 
-                Date start = HuamiCoordinator.getDisplayOnLiftStart();
+                Date start = HuamiCoordinator.getDisplayOnLiftStart(gbDevice.getAddress());
                 calendar.setTime(start);
                 cmd[4] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
                 cmd[5] = (byte) calendar.get(Calendar.MINUTE);
 
-                Date end = HuamiCoordinator.getDisplayOnLiftEnd();
+                Date end = HuamiCoordinator.getDisplayOnLiftEnd(gbDevice.getAddress());
                 calendar.setTime(end);
                 cmd[6] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
                 cmd[7] = (byte) calendar.get(Calendar.MINUTE);
@@ -1621,7 +1654,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     protected HuamiSupport setDisplayItems(TransactionBuilder builder) {
-        Set<String> pages = HuamiCoordinator.getDisplayItems();
+        Set<String> pages = HuamiCoordinator.getDisplayItems(gbDevice.getAddress());
         LOG.info("Setting display items to " + (pages == null ? "none" : pages));
 
         byte[] data = HuamiService.COMMAND_CHANGE_SCREENS.clone();
@@ -1649,7 +1682,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     private HuamiSupport setRotateWristToSwitchInfo(TransactionBuilder builder) {
-        boolean enable = HuamiCoordinator.getRotateWristToSwitchInfo();
+        boolean enable = HuamiCoordinator.getRotateWristToSwitchInfo(gbDevice.getAddress());
         LOG.info("Setting rotate wrist to cycle info to " + enable);
         if (enable) {
             builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), HuamiService.COMMAND_ENABLE_ROTATE_WRIST_TO_SWITCH_INFO);
@@ -1665,7 +1698,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
     }
 
     private HuamiSupport setDoNotDisturb(TransactionBuilder builder) {
-        DoNotDisturb doNotDisturb = HuamiCoordinator.getDoNotDisturb(getContext());
+        DoNotDisturb doNotDisturb = HuamiCoordinator.getDoNotDisturb(gbDevice.getAddress());
         LOG.info("Setting do not disturb to " + doNotDisturb);
         switch (doNotDisturb) {
             case OFF:
@@ -1679,12 +1712,12 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
 
                 Calendar calendar = GregorianCalendar.getInstance();
 
-                Date start = HuamiCoordinator.getDoNotDisturbStart();
+                Date start = HuamiCoordinator.getDoNotDisturbStart(gbDevice.getAddress());
                 calendar.setTime(start);
                 data[HuamiService.DND_BYTE_START_HOURS] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
                 data[HuamiService.DND_BYTE_START_MINUTES] = (byte) calendar.get(Calendar.MINUTE);
 
-                Date end = HuamiCoordinator.getDoNotDisturbEnd();
+                Date end = HuamiCoordinator.getDoNotDisturbEnd(gbDevice.getAddress());
                 calendar.setTime(end);
                 data[HuamiService.DND_BYTE_END_HOURS] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
                 data[HuamiService.DND_BYTE_END_MINUTES] = (byte) calendar.get(Calendar.MINUTE);
@@ -1751,6 +1784,37 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         return this;
     }
 
+    private HuamiSupport setDisconnectNotification(TransactionBuilder builder) {
+        DisconnectNotificationSetting disconnectNotificationSetting = HuamiCoordinator.getDisconnectNotificationSetting(getContext(), gbDevice.getAddress());
+        LOG.info("Setting disconnect notification to " + disconnectNotificationSetting);
+
+        switch (disconnectNotificationSetting) {
+            case ON:
+                builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), HuamiService.COMMAND_ENABLE_DISCONNECT_NOTIFCATION);
+                break;
+            case OFF:
+                builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), HuamiService.COMMAND_DISABLE_DISCONNECT_NOTIFCATION);
+                break;
+            case SCHEDULED:
+                byte[] cmd = HuamiService.COMMAND_ENABLE_DISCONNECT_NOTIFCATION.clone();
+
+                Calendar calendar = GregorianCalendar.getInstance();
+
+                Date start = HuamiCoordinator.getDisconnectNotificationStart(gbDevice.getAddress());
+                calendar.setTime(start);
+                cmd[4] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
+                cmd[5] = (byte) calendar.get(Calendar.MINUTE);
+
+                Date end = HuamiCoordinator.getDisconnectNotificationEnd(gbDevice.getAddress());
+                calendar.setTime(end);
+                cmd[6] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
+                cmd[7] = (byte) calendar.get(Calendar.MINUTE);
+
+                builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), cmd);
+        }
+        return this;
+    }
+
     private HuamiSupport setDistanceUnit(TransactionBuilder builder) {
         MiBandConst.DistanceUnit unit = HuamiCoordinator.getDistanceUnit();
         LOG.info("Setting distance unit to " + unit);
@@ -1759,6 +1823,68 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         } else {
             builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), HuamiService.COMMAND_DISTANCE_UNIT_IMPERIAL);
         }
+        return this;
+    }
+
+    protected HuamiSupport setBandScreenUnlock(TransactionBuilder builder) {
+        boolean enable = MiBand3Coordinator.getBandScreenUnlock(gbDevice.getAddress());
+        LOG.info("Setting band screen unlock to " + enable);
+
+        if (enable) {
+            builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), MiBand3Service.COMMAND_ENABLE_BAND_SCREEN_UNLOCK);
+        } else {
+            builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), MiBand3Service.COMMAND_DISABLE_BAND_SCREEN_UNLOCK);
+        }
+
+        return this;
+    }
+
+
+    protected HuamiSupport setLanguage(TransactionBuilder builder) {
+        String localeString = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString("language", "auto");
+        if (localeString == null || localeString.equals("auto")) {
+            String language = Locale.getDefault().getLanguage();
+            String country = Locale.getDefault().getCountry();
+
+            if (country == null) {
+                // sometimes country is null, no idea why, guess it.
+                country = language;
+            }
+            localeString = language + "_" + country.toUpperCase();
+        }
+        LOG.info("Setting device to locale: " + localeString);
+        final byte[] command_new = HuamiService.COMMAND_SET_LANGUAGE_NEW_TEMPLATE.clone();
+        System.arraycopy(localeString.getBytes(), 0, command_new, 3, localeString.getBytes().length);
+
+        byte[] command_old;
+        switch (localeString.substring(0, 2)) {
+            case "es":
+                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_SPANISH;
+                break;
+            case "zh":
+                if (localeString.equals("zh_CN")) {
+                    command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_SIMPLIFIED_CHINESE;
+                } else {
+                    command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_TRADITIONAL_CHINESE;
+
+                }
+                break;
+            default:
+                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_ENGLISH;
+        }
+        final byte[] finalCommand_old = command_old;
+        builder.add(new ConditionalWriteAction(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION)) {
+            @Override
+            protected byte[] checkCondition() {
+                if ((gbDevice.getType() == DeviceType.AMAZFITBIP && new Version(gbDevice.getFirmwareVersion()).compareTo(new Version("0.1.0.77")) < 0) ||
+                        (gbDevice.getType() == DeviceType.AMAZFITCOR && new Version(gbDevice.getFirmwareVersion()).compareTo(new Version("1.0.7.23")) < 0)) {
+                    return finalCommand_old;
+                } else {
+                    return command_new;
+                }
+            }
+        });
+
         return this;
     }
 
@@ -1811,6 +1937,7 @@ public class HuamiSupport extends AbstractBTLEDeviceSupport {
         setGoalNotification(builder);
         setInactivityWarnings(builder);
         setHeartrateSleepSupport(builder);
+        setDisconnectNotification(builder);
         setHeartrateMeasurementInterval(builder, getHeartRateMeasurementInterval());
     }
 

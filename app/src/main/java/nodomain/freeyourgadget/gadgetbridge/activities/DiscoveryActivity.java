@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2018 Andreas Shimokawa, boun, Carsten Pfeiffer,
+/*  Copyright (C) 2015-2019 Andreas Shimokawa, boun, Carsten Pfeiffer,
     Daniele Gobbetti, JohnnySun, jonnsoft, Lem Dulfo, Taavi Eomäe, Uwe Hermann
 
     This file is part of Gadgetbridge.
@@ -42,13 +42,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
-import android.support.v4.app.ActivityCompat;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,7 @@ import java.util.Objects;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsActivity;
 import nodomain.freeyourgadget.gadgetbridge.adapter.DeviceCandidateAdapter;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -69,7 +71,7 @@ import nodomain.freeyourgadget.gadgetbridge.util.DeviceHelper;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
 
 
-public class DiscoveryActivity extends AbstractGBActivity implements AdapterView.OnItemClickListener {
+public class DiscoveryActivity extends AbstractGBActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
     private static final Logger LOG = LoggerFactory.getLogger(DiscoveryActivity.class);
     private static final long SCAN_DURATION = 60000; // 60s
 
@@ -279,6 +281,7 @@ public class DiscoveryActivity extends AbstractGBActivity implements AdapterView
         cadidateListAdapter = new DeviceCandidateAdapter(this, deviceCandidates);
         deviceCandidatesView.setAdapter(cadidateListAdapter);
         deviceCandidatesView.setOnItemClickListener(this);
+        deviceCandidatesView.setOnItemLongClickListener(this);
 
         IntentFilter bluetoothIntents = new IntentFilter();
         bluetoothIntents.addAction(BluetoothDevice.ACTION_FOUND);
@@ -575,6 +578,27 @@ public class DiscoveryActivity extends AbstractGBActivity implements AdapterView
         Message m = Message.obtain(handler, runnable);
         m.obj = runnable;
         return m;
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+        GBDeviceCandidate deviceCandidate = deviceCandidates.get(position);
+        if (deviceCandidate == null) {
+            LOG.error("Device candidate clicked, but item not found");
+            return true;
+        }
+
+        DeviceCoordinator coordinator = DeviceHelper.getInstance().getCoordinator(deviceCandidate);
+        GBDevice device = DeviceHelper.getInstance().toSupportedDevice(deviceCandidate);
+        if (coordinator.getSupportedDeviceSpecificSettings(device) != null) {
+            return true;
+        }
+
+        Intent startIntent;
+        startIntent = new Intent(this, DeviceSettingsActivity.class);
+        startIntent.putExtra(GBDevice.EXTRA_DEVICE, device);
+        startActivity(startIntent);
+        return true;
     }
 
     @Override

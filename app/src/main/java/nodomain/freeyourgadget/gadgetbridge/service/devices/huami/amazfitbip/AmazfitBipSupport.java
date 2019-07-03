@@ -1,4 +1,5 @@
-/*  Copyright (C) 2017-2018 Andreas Shimokawa, Carsten Pfeiffer
+/*  Copyright (C) 2017-2019 Andreas Shimokawa, Carsten Pfeiffer, Matthieu
+    Baerts, Roi Greenberg
 
     This file is part of Gadgetbridge.
 
@@ -34,12 +35,15 @@ import java.util.Set;
 import java.util.SimpleTimeZone;
 import java.util.UUID;
 
+import cyanogenmod.weather.util.WeatherUtils;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
+import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiFWHelper;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiService;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiWeatherConditions;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.amazfitbip.AmazfitBipFWHelper;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.amazfitbip.AmazfitBipService;
+import nodomain.freeyourgadget.gadgetbridge.devices.miband.MiBandConst;
 import nodomain.freeyourgadget.gadgetbridge.model.CallSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.DeviceType;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
@@ -58,7 +62,6 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.amazfitbip.ope
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.operations.FetchActivityOperation;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.operations.FetchSportsSummaryOperation;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.miband.NotificationStrategy;
-import nodomain.freeyourgadget.gadgetbridge.util.Prefs;
 import nodomain.freeyourgadget.gadgetbridge.util.StringUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.Version;
 
@@ -82,9 +85,9 @@ public class AmazfitBipSupport extends HuamiSupport {
             return;
         }
 
-        String senderOrTiltle = StringUtils.getFirstOf(notificationSpec.sender, notificationSpec.title);
+        String senderOrTitle = StringUtils.getFirstOf(notificationSpec.sender, notificationSpec.title);
 
-        String message = StringUtils.truncate(senderOrTiltle, 32) + "\0";
+        String message = StringUtils.truncate(senderOrTitle, 32) + "\0";
         if (notificationSpec.subject != null) {
             message += StringUtils.truncate(notificationSpec.subject, 128) + "\n\n";
         }
@@ -181,14 +184,7 @@ public class AmazfitBipSupport extends HuamiSupport {
             return this;
         }
 
-        Version version = new Version(gbDevice.getFirmwareVersion());
-        if (version.compareTo(new Version("0.1.1.14")) < 0) {
-            LOG.warn("Won't set menu items since firmware is too low to be safe");
-            return this;
-        }
-
-        Prefs prefs = GBApplication.getPrefs();
-        Set<String> pages = prefs.getStringSet("bip_display_items", null);
+        Set<String> pages = HuamiCoordinator.getDisplayItems(gbDevice.getAddress());
         LOG.info("Setting display items to " + (pages == null ? "none" : pages));
         byte[] command = AmazfitBipService.COMMAND_CHANGE_SCREENS.clone();
 
@@ -258,6 +254,8 @@ public class AmazfitBipSupport extends HuamiSupport {
         if (version.compareTo(new Version("0.0.8.74")) >= 0) {
             supportsConditionString = true;
         }
+
+        MiBandConst.DistanceUnit unit = HuamiCoordinator.getDistanceUnit();
         int tz_offset_hours = SimpleTimeZone.getDefault().getOffset(weatherSpec.timestamp * 1000L) / (1000 * 60 * 60);
         try {
             TransactionBuilder builder;
@@ -276,7 +274,12 @@ public class AmazfitBipSupport extends HuamiSupport {
             buf.putInt(weatherSpec.timestamp);
             buf.put((byte) (tz_offset_hours * 4));
             buf.put(condition);
-            buf.put((byte) (weatherSpec.currentTemp - 273));
+
+            int currentTemp = weatherSpec.currentTemp - 273;
+            if (unit == MiBandConst.DistanceUnit.IMPERIAL) {
+                currentTemp = (int) WeatherUtils.celsiusToFahrenheit(currentTemp);
+            }
+            buf.put((byte) currentTemp);
 
             if (supportsConditionString) {
                 buf.put(weatherSpec.currentCondition.getBytes());
@@ -354,8 +357,16 @@ public class AmazfitBipSupport extends HuamiSupport {
             byte condition = HuamiWeatherConditions.mapToAmazfitBipWeatherCode(weatherSpec.currentConditionCode);
             buf.put(condition);
             buf.put(condition);
-            buf.put((byte) (weatherSpec.todayMaxTemp - 273));
-            buf.put((byte) (weatherSpec.todayMinTemp - 273));
+
+            int todayMaxTemp = weatherSpec.todayMaxTemp - 273;
+            int todayMinTemp = weatherSpec.todayMinTemp - 273;
+            if (unit == MiBandConst.DistanceUnit.IMPERIAL) {
+                todayMaxTemp = (int) WeatherUtils.celsiusToFahrenheit(todayMaxTemp);
+                todayMinTemp = (int) WeatherUtils.celsiusToFahrenheit(todayMinTemp);
+            }
+            buf.put((byte) todayMaxTemp);
+            buf.put((byte) todayMinTemp);
+
             if (supportsConditionString) {
                 buf.put(weatherSpec.currentCondition.getBytes());
                 buf.put((byte) 0);
@@ -365,8 +376,16 @@ public class AmazfitBipSupport extends HuamiSupport {
                 condition = HuamiWeatherConditions.mapToAmazfitBipWeatherCode(forecast.conditionCode);
                 buf.put(condition);
                 buf.put(condition);
-                buf.put((byte) (forecast.maxTemp - 273));
-                buf.put((byte) (forecast.minTemp - 273));
+
+                int forecastMaxTemp = forecast.maxTemp - 273;
+                int forecastMinTemp = forecast.minTemp - 273;
+                if (unit == MiBandConst.DistanceUnit.IMPERIAL) {
+                    forecastMaxTemp = (int) WeatherUtils.celsiusToFahrenheit(forecastMaxTemp);
+                    forecastMinTemp = (int) WeatherUtils.celsiusToFahrenheit(forecastMinTemp);
+                }
+                buf.put((byte) forecastMaxTemp);
+                buf.put((byte) forecastMinTemp);
+
                 if (supportsConditionString) {
                     buf.put(Weather.getConditionString(forecast.conditionCode).getBytes());
                     buf.put((byte) 0);
@@ -455,82 +474,6 @@ public class AmazfitBipSupport extends HuamiSupport {
         builder.write(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION), AmazfitBipService.COMMAND_REQUEST_GPS_VERSION);
         return this;
     }
-
-    protected AmazfitBipSupport setLanguage(TransactionBuilder builder) {
-
-        String language = Locale.getDefault().getLanguage();
-        String country = Locale.getDefault().getCountry();
-
-        LOG.info("Setting watch language, phone language = " + language + " country = " + country);
-
-        final byte[] command_new;
-        final byte[] command_old;
-        String localeString;
-
-        switch (GBApplication.getPrefs().getInt("amazfitbip_language", -1)) {
-            case 0:
-                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_SIMPLIFIED_CHINESE;
-                localeString = "zh_CN";
-                break;
-            case 1:
-                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_TRADITIONAL_CHINESE;
-                localeString = "zh_TW";
-                break;
-            case 2:
-                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_ENGLISH;
-                localeString = "en_US";
-                break;
-            case 3:
-                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_SPANISH;
-                localeString = "es_ES";
-                break;
-            case 4:
-                command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_ENGLISH;
-                localeString = "ru_RU";
-                break;
-            default:
-                switch (language) {
-                    case "zh":
-                        if (country.equals("TW") || country.equals("HK") || country.equals("MO")) { // Taiwan, Hong Kong,  Macao
-                            command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_TRADITIONAL_CHINESE;
-                            localeString = "zh_TW";
-                        } else {
-                            command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_SIMPLIFIED_CHINESE;
-                            localeString = "zh_CN";
-                        }
-                        break;
-                    case "es":
-                        command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_SPANISH;
-                        localeString = "es_ES";
-                        break;
-                    case "ru":
-                        command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_ENGLISH;
-                        localeString = "ru_RU";
-                        break;
-                    default:
-                        command_old = AmazfitBipService.COMMAND_SET_LANGUAGE_ENGLISH;
-                        localeString = "en_US";
-                        break;
-                }
-        }
-        command_new = HuamiService.COMMAND_SET_LANGUAGE_NEW_TEMPLATE.clone();
-        System.arraycopy(localeString.getBytes(), 0, command_new, 3, localeString.getBytes().length);
-
-        builder.add(new ConditionalWriteAction(getCharacteristic(HuamiService.UUID_CHARACTERISTIC_3_CONFIGURATION)) {
-            @Override
-            protected byte[] checkCondition() {
-                if ((gbDevice.getType() == DeviceType.AMAZFITBIP && new Version(gbDevice.getFirmwareVersion()).compareTo(new Version("0.1.0.77")) >= 0) ||
-                        (gbDevice.getType() == DeviceType.AMAZFITCOR && new Version(gbDevice.getFirmwareVersion()).compareTo(new Version("1.0.7.23")) >= 0)) {
-                    return command_new;
-                } else {
-                    return command_old;
-                }
-            }
-        });
-
-        return this;
-    }
-
 
     @Override
     public void phase2Initialize(TransactionBuilder builder) {

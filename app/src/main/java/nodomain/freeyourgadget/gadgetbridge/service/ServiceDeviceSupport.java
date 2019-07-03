@@ -1,5 +1,6 @@
-/*  Copyright (C) 2015-2018 Andreas Shimokawa, Carsten Pfeiffer, Daniele
-    Gobbetti, Julien Pivotto, Kasha, Steffen Liebergeld
+/*  Copyright (C) 2015-2019 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+    Gobbetti, José Rebelo, Julien Pivotto, Kasha, Sebastian Kranz, Steffen
+    Liebergeld
 
     This file is part of Gadgetbridge.
 
@@ -256,11 +257,11 @@ public class ServiceDeviceSupport implements DeviceSupport {
     }
 
     @Override
-    public void onReboot() {
-        if (checkBusy("reboot")) {
+    public void onReset(int flags) {
+        if (checkBusy("reset")) {
             return;
         }
-        delegate.onReboot();
+        delegate.onReset(flags);
     }
 
     @Override
@@ -357,6 +358,14 @@ public class ServiceDeviceSupport implements DeviceSupport {
             return;
         }
         delegate.onSendConfiguration(config);
+    }
+
+    @Override
+    public void onReadConfiguration(String config) {
+        if (checkBusy("read configuration: " + config)) {
+            return;
+        }
+        delegate.onReadConfiguration(config);
     }
 
     @Override
