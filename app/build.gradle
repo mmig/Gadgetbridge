@@ -39,6 +39,19 @@ android {
         }
     }
 
+    // MOD [russa#as-library] flavors for disabling/enabling "dangerous" (w.r.t. PlayStore guidelines) permissions in Android manifest
+    flavorDimensions "permissions"
+    productFlavors {
+        //default permissions: uses default manifest (without call/sms permissions)
+        defaultPermissions {
+            dimension "permissions"
+        }
+        //extended permissions: adds permission declarations for call/sms permissions to manifest
+        extendedPermissions {
+            dimension "permissions"
+        }
+    }
+
     lintOptions {
         abortOnError ABORT_ON_CHECK_FAILURE
         lintConfig file("${project.rootDir}/config/lint/lint.xml")

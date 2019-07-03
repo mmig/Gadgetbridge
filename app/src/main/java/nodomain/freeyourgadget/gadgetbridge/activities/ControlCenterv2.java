@@ -297,18 +297,22 @@ public class ControlCenterv2 extends AppCompatActivity
             wantedPermissions.add(Manifest.permission.READ_CONTACTS);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_DENIED)
             wantedPermissions.add(Manifest.permission.CALL_PHONE);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_DENIED)
-            wantedPermissions.add(Manifest.permission.READ_CALL_LOG);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED)
             wantedPermissions.add(Manifest.permission.READ_PHONE_STATE);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.PROCESS_OUTGOING_CALLS) == PackageManager.PERMISSION_DENIED)
-            wantedPermissions.add(Manifest.permission.PROCESS_OUTGOING_CALLS);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_DENIED)
-            wantedPermissions.add(Manifest.permission.RECEIVE_SMS);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED)
-            wantedPermissions.add(Manifest.permission.READ_SMS);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED)
-            wantedPermissions.add(Manifest.permission.SEND_SMS);
+        if(GBApplication.getPrefs().getBoolean("enableCallHandler", false)) {// MOD [russa#as-library] disable "dangerous" (w.r.t. PlayStore guidelines) permisson-usage (if enabled, the Android manifest must have according permission entries!)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_DENIED)
+                wantedPermissions.add(Manifest.permission.READ_CALL_LOG);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.PROCESS_OUTGOING_CALLS) == PackageManager.PERMISSION_DENIED)
+                wantedPermissions.add(Manifest.permission.PROCESS_OUTGOING_CALLS);
+        }
+        if(GBApplication.getPrefs().getBoolean("enableCallHandler", false)) {// MOD [russa#as-library] disable "dangerous" (w.r.t. PlayStore guidelines) permisson-usage (if enabled, the Android manifest must have according permission entries!)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_DENIED)
+                wantedPermissions.add(Manifest.permission.RECEIVE_SMS);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED)
+                wantedPermissions.add(Manifest.permission.READ_SMS);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED)
+                wantedPermissions.add(Manifest.permission.SEND_SMS);
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)
             wantedPermissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_DENIED)

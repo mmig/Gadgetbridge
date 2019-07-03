@@ -8,12 +8,18 @@
     -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <!-- MOD [russa#as-library] disabled "dangerous" (w.r.t. PlayStore guidelines) permission
+        <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
+    <!-- MOD [russa#as-library] disabled "dangerous" (w.r.t. PlayStore guidelines) permission
+        <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
+    -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
+    <!-- MOD [russa#as-library] disabled "dangerous" (w.r.t. PlayStore guidelines) permissions
+        <uses-permission android:name="android.permission.RECEIVE_SMS" />
+        <uses-permission android:name="android.permission.SEND_SMS" />
+    -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />

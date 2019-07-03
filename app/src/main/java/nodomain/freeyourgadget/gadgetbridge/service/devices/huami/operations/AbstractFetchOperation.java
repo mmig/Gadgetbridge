@@ -187,6 +187,7 @@ public abstract class AbstractFetchOperation extends AbstractHuamiOperation {
                 Calendar startTimestamp = getSupport().fromTimeBytes(Arrays.copyOfRange(value, 7, value.length));
                 setStartTimestamp(startTimestamp);
 
+                // MOD [russa#as-library] allow disabling synchronization message when used as library (i.e. "silent synchronization")
                 boolean showToast = !GBApplication.getPrefs().getBoolean("disableSyncToast", false);
 
                 if(showToast) {

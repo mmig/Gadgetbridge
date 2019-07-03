@@ -327,7 +327,10 @@ public abstract class AbstractDeviceSupport implements DeviceSupport {
                 }
                 if (deviceEvent.phoneNumber != null) {
                     LOG.info("Got notification reply for SMS from " + deviceEvent.phoneNumber + " : " + deviceEvent.reply);
-                    SmsManager.getDefault().sendTextMessage(deviceEvent.phoneNumber, null, deviceEvent.reply, null, null);
+
+                    if(GBApplication.getPrefs().getBoolean("enableSmsHandler", false)) { // <- MOD [russa#as-library] disable "dangerous" (w.r.t. PlayStore guidelines) permisson-usage (if enabled, the Android manifest must have according permission entries!)
+                        SmsManager.getDefault().sendTextMessage(deviceEvent.phoneNumber, null, deviceEvent.reply, null, null);
+                    }
                 } else {
                     LOG.info("Got notification reply for notification id " + deviceEvent.handle + " : " + deviceEvent.reply);
                     action = NotificationListener.ACTION_REPLY;

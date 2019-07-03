@@ -652,14 +652,22 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         }
 
         if (enable) {
-            if (mPhoneCallReceiver == null) {
+            if (
+                    mPhoneCallReceiver == null
+                    // MOD [russa#as-library] disable "dangerous" (w.r.t. PlayStore guidelines) permisson-usage (if enabled, the Android manifest must have according permission entries!)
+                    && GBApplication.getPrefs().getBoolean("enableCallHandler", false)
+             ) {
                 mPhoneCallReceiver = new PhoneCallReceiver();
                 IntentFilter filter = new IntentFilter();
                 filter.addAction("android.intent.action.PHONE_STATE");
                 filter.addAction("android.intent.action.NEW_OUTGOING_CALL");
                 registerReceiver(mPhoneCallReceiver, filter);
             }
-            if (mSMSReceiver == null) {
+            if (
+                    mSMSReceiver == null
+                    // MOD [russa#as-library] disable "dangerous" (w.r.t. PlayStore guidelines) permisson-usage (if enabled, the Android manifest must have according permission entries!)
+                    && GBApplication.getPrefs().getBoolean("enableSmsHandler", false)
+            ) {
                 mSMSReceiver = new SMSReceiver();
                 registerReceiver(mSMSReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
             }
