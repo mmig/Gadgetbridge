@@ -19,7 +19,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
     compileSdkVersion 27
-    buildToolsVersion "28.0.2"
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         //DISABLED mc: for use as library
@@ -28,8 +28,8 @@ android {
         targetSdkVersion 27
 
         // Note: always bump BOTH versionCode and versionName!
-        versionName "0.30.0"
-        versionCode 138
+        versionName "0.32.1"
+        versionCode 144
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -103,6 +103,7 @@ dependencies {
     implementation "org.cyanogenmod:platform.sdk:6.0"
     implementation 'com.jaredrummler:colorpicker:1.0.2'
 //    implementation project(":DaoCore")
+    implementation 'com.github.wax911:android-emojify:0.1.7'
 }
 
 preBuild.dependsOn(":GBDaoGenerator:genSources")

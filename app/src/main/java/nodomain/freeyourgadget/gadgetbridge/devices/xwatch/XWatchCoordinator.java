@@ -87,8 +87,8 @@ public class XWatchCoordinator extends AbstractDeviceCoordinator {
     }
 
     @Override
-    public boolean supportsAlarmConfiguration() {
-        return true;
+    public int getAlarmSlotCount() {
+        return 0;
     }
 
     @Override

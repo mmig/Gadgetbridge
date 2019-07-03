@@ -75,8 +75,8 @@ public class ZeTimeCoordinator extends AbstractDeviceCoordinator {
     }
 
     @Override
-    public boolean supportsAlarmConfiguration() {
-        return true;
+    public int getAlarmSlotCount() {
+        return 3; // FIXME - check the real value
     }
 
     @Override

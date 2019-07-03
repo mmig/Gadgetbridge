@@ -52,8 +52,8 @@ import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventAppInfo;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventBatteryInfo;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventCallControl;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventDisplayMessage;
-import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventFmFrequency;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventFindPhone;
+import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventFmFrequency;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventLEDColor;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventMusicControl;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventNotificationControl;
@@ -174,6 +174,7 @@ public abstract class AbstractDeviceSupport implements DeviceSupport {
         switch (deviceEvent.event) {
             case START:
                 Intent startIntent = new Intent(getContext(), FindPhoneActivity.class);
+                startIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(startIntent);
                 break;
             case STOP:
@@ -323,7 +324,7 @@ public abstract class AbstractDeviceSupport implements DeviceSupport {
                 break;
             case REPLY:
                 if (deviceEvent.phoneNumber == null) {
-                    deviceEvent.phoneNumber = (String) GBApplication.getIDSenderLookup().lookup(deviceEvent.handle);
+                    deviceEvent.phoneNumber = (String) GBApplication.getIDSenderLookup().lookup((int) (deviceEvent.handle >> 4));
                 }
                 if (deviceEvent.phoneNumber != null) {
                     LOG.info("Got notification reply for SMS from " + deviceEvent.phoneNumber + " : " + deviceEvent.reply);
@@ -340,6 +341,7 @@ public abstract class AbstractDeviceSupport implements DeviceSupport {
         if (action != null) {
             Intent notificationListenerIntent = new Intent(action);
             notificationListenerIntent.putExtra("handle", deviceEvent.handle);
+            notificationListenerIntent.putExtra("title", deviceEvent.title);
             if (deviceEvent.reply != null) {
                 Prefs prefs = GBApplication.getPrefs();
                 String suffix = prefs.getString("canned_reply_suffix", null);
